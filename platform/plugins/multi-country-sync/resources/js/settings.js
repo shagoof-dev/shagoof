@@ -2,11 +2,18 @@
 (function() {
     'use strict';
     
+    console.log('Multi-Country Sync Settings JS loaded');
+    
     // Wait for DOM to be ready
     function init() {
+        console.log('Initializing Multi-Country Sync Settings');
+        
         // Generate API Key functionality
         document.querySelectorAll('.generate-api-key-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const instance = this.dataset.instance;
                 const resultDiv = document.getElementById(`${instance}_api_key_result`);
                 const inputField = document.getElementById(`${instance}_api_key`);
@@ -75,7 +82,10 @@
         
         // Toggle API key visibility
         document.querySelectorAll('.toggle-api-key-visibility').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const targetId = this.dataset.target;
                 const inputField = document.getElementById(targetId);
                 const icon = this.querySelector('i');
@@ -93,130 +103,150 @@
                 }
             });
         });
-    }
-    
-    // Test Connection - Use document-level event delegation
-    document.addEventListener('click', function(e) {
-        // Check if click is on test connection button or its children
-        const btn = e.target.closest('#test-connection-btn');
-        if (!btn) return;
         
-        e.preventDefault();
-        e.stopPropagation();
+        // Test Connection - Direct button event listener
+        const testConnectionBtn = document.getElementById('test-connection-btn');
+        const testConnectionResult = document.getElementById('test-connection-result');
         
-        const result = document.getElementById('test-connection-result');
-        if (!result) {
-            console.error('Test connection result div not found');
-            return;
-        }
-        
-        const instances = ['uae', 'sa', 'eg'];
-        const currentCountryInput = document.querySelector('[name="current_country"]');
-        const currentCountry = currentCountryInput ? currentCountryInput.value : 'eg';
-        const enabledInstances = instances.filter(i => i !== currentCountry);
-        
-        if (enabledInstances.length === 0) {
-            result.innerHTML = '<div class="alert alert-warning">No other instances to test</div>';
-            return;
-        }
-        
-        btn.disabled = true;
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<i class="ti ti-loader"></i> Testing...';
-        result.innerHTML = '';
-        
-        let completed = 0;
-        const results = [];
-        
-        enabledInstances.forEach(instance => {
-            const urlInput = document.querySelector(`[name="${instance}_api_url"]`);
-            const apiKeyInput = document.querySelector(`[name="${instance}_api_key"]`);
+        if (testConnectionBtn) {
+            console.log('Test connection button found');
             
-            const url = urlInput ? urlInput.value : '';
-            const apiKey = apiKeyInput ? apiKeyInput.value : '';
+            // Ensure button type is button, not submit
+            testConnectionBtn.type = 'button';
             
-            if (!url || !apiKey) {
-                results.push({
-                    instance: instance.toUpperCase(),
-                    status: 'skipped',
-                    message: 'URL or API Key not configured'
-                });
-                completed++;
-                checkComplete();
-                return;
-            }
-            
-            const testUrl = window.location.origin + '/admin/multi-country-sync/settings/test-connection';
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
-                             document.querySelector('input[name="_token"]')?.value;
-            
-            if (!csrfToken) {
-                results.push({
-                    instance: instance.toUpperCase(),
-                    status: 'error',
-                    message: 'CSRF token not found'
-                });
-                completed++;
-                checkComplete();
-                return;
-            }
-            
-            fetch(testUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ instance: instance })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || `HTTP ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                results.push({
-                    instance: instance.toUpperCase(),
-                    status: data.error ? 'error' : (data.data?.status || 'success'),
-                    message: data.message || data.data?.message || 'Unknown error'
-                });
-                completed++;
-                checkComplete();
-            })
-            .catch(error => {
-                console.error('Test connection error:', error);
-                results.push({
-                    instance: instance.toUpperCase(),
-                    status: 'error',
-                    message: error.message || 'Connection failed'
-                });
-                completed++;
-                checkComplete();
-            });
-        });
-        
-        function checkComplete() {
-            if (completed === enabledInstances.length) {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
+            testConnectionBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                let html = '<div class="mt-2">';
-                results.forEach(r => {
-                    const alertClass = r.status === 'success' ? 'alert-success' : 
-                                     r.status === 'skipped' ? 'alert-warning' : 'alert-danger';
-                    html += `<div class="alert ${alertClass} mb-2">
-                        <strong>${r.instance}:</strong> ${r.message}
-                    </div>`;
+                console.log('Test connection button clicked');
+                
+                if (!testConnectionResult) {
+                    console.error('Test connection result div not found');
+                    return;
+                }
+                
+                const instances = ['uae', 'sa', 'eg'];
+                const currentCountryInput = document.querySelector('[name="current_country"]');
+                const currentCountry = currentCountryInput ? currentCountryInput.value : 'eg';
+                const enabledInstances = instances.filter(i => i !== currentCountry);
+                
+                console.log('Current country:', currentCountry);
+                console.log('Enabled instances:', enabledInstances);
+                
+                if (enabledInstances.length === 0) {
+                    testConnectionResult.innerHTML = '<div class="alert alert-warning">No other instances to test</div>';
+                    return;
+                }
+                
+                testConnectionBtn.disabled = true;
+                const originalHtml = testConnectionBtn.innerHTML;
+                testConnectionBtn.innerHTML = '<i class="ti ti-loader"></i> Testing...';
+                testConnectionResult.innerHTML = '';
+                
+                let completed = 0;
+                const results = [];
+                
+                enabledInstances.forEach(instance => {
+                    const urlInput = document.querySelector(`[name="${instance}_api_url"]`);
+                    const apiKeyInput = document.querySelector(`[name="${instance}_api_key"]`);
+                    
+                    const url = urlInput ? urlInput.value : '';
+                    const apiKey = apiKeyInput ? apiKeyInput.value : '';
+                    
+                    console.log(`Testing ${instance}: URL=${url}, API Key=${apiKey ? '***' : 'empty'}`);
+                    
+                    if (!url || !apiKey) {
+                        results.push({
+                            instance: instance.toUpperCase(),
+                            status: 'skipped',
+                            message: 'URL or API Key not configured'
+                        });
+                        completed++;
+                        checkComplete();
+                        return;
+                    }
+                    
+                    const testUrl = window.location.origin + '/admin/multi-country-sync/settings/test-connection';
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                                     document.querySelector('input[name="_token"]')?.value;
+                    
+                    console.log('Test URL:', testUrl);
+                    console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+                    
+                    if (!csrfToken) {
+                        results.push({
+                            instance: instance.toUpperCase(),
+                            status: 'error',
+                            message: 'CSRF token not found'
+                        });
+                        completed++;
+                        checkComplete();
+                        return;
+                    }
+                    
+                    fetch(testUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ instance: instance })
+                    })
+                    .then(response => {
+                        console.log(`Response for ${instance}:`, response.status, response.statusText);
+                        if (!response.ok) {
+                            return response.json().then(err => {
+                                console.error(`Error for ${instance}:`, err);
+                                throw new Error(err.message || `HTTP ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(`Data for ${instance}:`, data);
+                        results.push({
+                            instance: instance.toUpperCase(),
+                            status: data.error ? 'error' : (data.data?.status || 'success'),
+                            message: data.message || data.data?.message || 'Unknown error'
+                        });
+                        completed++;
+                        checkComplete();
+                    })
+                    .catch(error => {
+                        console.error(`Test connection error for ${instance}:`, error);
+                        results.push({
+                            instance: instance.toUpperCase(),
+                            status: 'error',
+                            message: error.message || 'Connection failed'
+                        });
+                        completed++;
+                        checkComplete();
+                    });
                 });
-                html += '</div>';
-                result.innerHTML = html;
-            }
+                
+                function checkComplete() {
+                    if (completed === enabledInstances.length) {
+                        testConnectionBtn.disabled = false;
+                        testConnectionBtn.innerHTML = originalHtml;
+                        
+                        let html = '<div class="mt-2">';
+                        results.forEach(r => {
+                            const alertClass = r.status === 'success' ? 'alert-success' : 
+                                             r.status === 'skipped' ? 'alert-warning' : 'alert-danger';
+                            html += `<div class="alert ${alertClass} mb-2">
+                                <strong>${r.instance}:</strong> ${r.message}
+                            </div>`;
+                        });
+                        html += '</div>';
+                        testConnectionResult.innerHTML = html;
+                    }
+                }
+            });
+        } else {
+            console.warn('Test connection button not found');
         }
-    });
+    }
     
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
