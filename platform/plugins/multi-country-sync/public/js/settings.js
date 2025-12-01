@@ -1,4 +1,8 @@
-document.addEventListener('DOMContentLoaded', function() {
+// Use both DOMContentLoaded and immediate execution for better compatibility
+(function() {
+    'use strict';
+    
+    function initAll() {
     // Generate API Key
     document.querySelectorAll('.generate-api-key-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -214,5 +218,117 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize test connection handler
     initTestConnection();
-});
+    }
+    
+    // Use event delegation for test connection button (works even if button is added dynamically)
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.id === 'test-connection-btn' || e.target.closest('#test-connection-btn'))) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const btn = e.target.id === 'test-connection-btn' ? e.target : e.target.closest('#test-connection-btn');
+            const result = document.getElementById('test-connection-result');
+            
+            if (!result) {
+                console.error('Test connection result div not found');
+                return;
+            }
+            
+            const instances = ['uae', 'sa', 'eg'];
+            const currentCountryInput = document.querySelector('[name="current_country"]');
+            const currentCountry = currentCountryInput ? currentCountryInput.value : 'eg';
+            const enabledInstances = instances.filter(i => i !== currentCountry);
+            
+            if (enabledInstances.length === 0) {
+                result.innerHTML = '<div class="alert alert-warning">No other instances to test</div>';
+                return;
+            }
+            
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="ti ti-loader"></i> Testing...';
+            result.innerHTML = '';
+            
+            let completed = 0;
+            const results = [];
+            
+            enabledInstances.forEach(instance => {
+                const urlInput = document.querySelector(`[name="${instance}_api_url"]`);
+                const apiKeyInput = document.querySelector(`[name="${instance}_api_key"]`);
+                
+                const url = urlInput ? urlInput.value : '';
+                const apiKey = apiKeyInput ? apiKeyInput.value : '';
+                
+                if (!url || !apiKey) {
+                    results.push({
+                        instance: instance.toUpperCase(),
+                        status: 'skipped',
+                        message: 'URL or API Key not configured'
+                    });
+                    completed++;
+                    checkComplete();
+                    return;
+                }
+                
+                const testUrl = window.location.origin + '/admin/multi-country-sync/settings/test-connection';
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                                 document.querySelector('input[name="_token"]')?.value;
+                
+                fetch(testUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ instance: instance })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    results.push({
+                        instance: instance.toUpperCase(),
+                        status: data.error ? 'error' : (data.data?.status || 'success'),
+                        message: data.message || data.data?.message || 'Unknown error'
+                    });
+                    completed++;
+                    checkComplete();
+                })
+                .catch(error => {
+                    results.push({
+                        instance: instance.toUpperCase(),
+                        status: 'error',
+                        message: error.message || 'Connection failed'
+                    });
+                    completed++;
+                    checkComplete();
+                });
+            });
+            
+            function checkComplete() {
+                if (completed === enabledInstances.length) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    
+                    let html = '<div class="mt-2">';
+                    results.forEach(r => {
+                        const alertClass = r.status === 'success' ? 'alert-success' : 
+                                         r.status === 'skipped' ? 'alert-warning' : 'alert-danger';
+                        html += `<div class="alert ${alertClass} mb-2">
+                            <strong>${r.instance}:</strong> ${r.message}
+                        </div>`;
+                    });
+                    html += '</div>';
+                    result.innerHTML = html;
+                }
+            }
+        }
+    });
+    
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
+})();
 
