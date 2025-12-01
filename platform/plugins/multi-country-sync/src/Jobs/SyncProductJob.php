@@ -66,10 +66,12 @@ class SyncProductJob implements ShouldQueue
             }
 
             // Check if product should be synced
-            if ($product->status !== BaseStatusEnum::PUBLISHED) {
+            // Note: status is cast to BaseStatusEnum, so we compare enum values
+            if ($product->status != BaseStatusEnum::PUBLISHED) {
                 Log::debug('Multi-Country Sync Job: Product not published', [
                     'product_id' => $this->productId,
-                    'status' => $product->status,
+                    'status' => $product->status?->getValue() ?? 'null',
+                    'status_object' => $product->status,
                 ]);
                 return;
             }
