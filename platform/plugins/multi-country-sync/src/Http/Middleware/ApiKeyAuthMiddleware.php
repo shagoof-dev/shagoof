@@ -22,16 +22,26 @@ class ApiKeyAuthMiddleware
         $instances = config('plugins.multi-country-sync.sync.instances', []);
         $currentCountry = config('plugins.multi-country-sync.sync.current_country', 'eg');
         
-        // Check if API key matches any instance
-        $validKey = false;
-        foreach ($instances as $instanceKey => $instance) {
-            if ($instanceKey !== $currentCountry && ($instance['api_key'] ?? null) === $apiKey) {
-                $validKey = true;
-                break;
-            }
+        // Get the current instance's API key (the key for THIS instance)
+        $currentInstanceApiKey = $instances[$currentCountry]['api_key'] ?? null;
+        
+        if (empty($currentInstanceApiKey)) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'API key not configured for this instance',
+            ], 401);
         }
         
-        if (! $validKey) {
+        // Check if the incoming API key matches THIS instance's API key
+        // Other instances will send THIS instance's API key when syncing to us
+        if ($apiKey !== $currentInstanceApiKey) {
+            \Illuminate\Support\Facades\Log::warning('Multi-Country Sync: Invalid API key', [
+                'current_country' => $currentCountry,
+                'expected_key_length' => strlen($currentInstanceApiKey),
+                'received_key_length' => strlen($apiKey),
+                'keys_match' => $apiKey === $currentInstanceApiKey,
+            ]);
+            
             return response()->json([
                 'error' => 'Unauthorized',
                 'message' => 'Invalid API key',
