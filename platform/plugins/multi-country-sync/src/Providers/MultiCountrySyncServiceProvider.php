@@ -28,6 +28,8 @@ class MultiCountrySyncServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        parent::boot(); // Important: Call parent boot to register event listeners
+
         $this
             ->setNamespace('plugins/multi-country-sync')
             ->loadAndPublishConfigurations(['sync'])
