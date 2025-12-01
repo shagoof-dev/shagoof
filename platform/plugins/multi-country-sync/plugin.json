@@ -1,0 +1,12 @@
+{
+    "id": "botble/multi-country-sync",
+    "name": "Multi Country Sync",
+    "namespace": "Botble\\MultiCountrySync\\",
+    "provider": "Botble\\MultiCountrySync\\Providers\\MultiCountrySyncServiceProvider",
+    "author": "Ahmed Ayman",
+    "url": "https://maksoudaa.com",
+    "version": "1.0.0",
+    "description": "Synchronize products across multiple country instances (EG, UAE, SA)",
+    "minimum_core_version": "7.3.0"
+}
+
