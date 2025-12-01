@@ -103,6 +103,12 @@ class SyncSettingController extends BaseController
 
         // Save all settings
         Setting::set($settings)->save();
+        
+        // Clear config cache to ensure new values are loaded
+        if (function_exists('config')) {
+            config()->forget('plugins.multi-country-sync.sync');
+        }
+        \Artisan::call('config:clear');
 
         return $response
             ->setPreviousUrl(route('multi-country-sync.settings'))
