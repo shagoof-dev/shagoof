@@ -31,19 +31,15 @@ class SyncSettingController extends BaseController
             $settings['multi_country_sync_enabled'] = $data['multi_country_sync_enabled'] ? '1' : '0';
         }
         
-        // Current country - check validated data first, then raw input
-        $currentCountry = null;
-        if (isset($data['current_country'])) {
-            $currentCountry = $data['current_country'];
-        } else {
-            $currentCountry = $request->input('current_country');
-        }
+        // Current country - it's required in validation, so it should always be present
+        // Check validated data first, then raw input as fallback
+        $currentCountry = $data['current_country'] ?? $request->input('current_country');
         
-        // Always save current_country if it's valid (it's required in validation)
+        // Always save current_country (it's required, so should always have a value)
         if ($currentCountry && in_array($currentCountry, ['eg', 'uae', 'sa'])) {
             $settings['multi_country_sync_current_country'] = (string) $currentCountry;
         } else {
-            // If not provided, keep existing value or default to 'eg'
+            // Fallback: keep existing value or default to 'eg'
             $existing = setting('multi_country_sync_current_country', 'eg');
             $settings['multi_country_sync_current_country'] = (string) $existing;
         }
