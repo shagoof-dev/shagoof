@@ -54,6 +54,7 @@ return [
         'description',
         'content',
         'sku',
+        'slug',
         'price',
         'sale_price',
         'quantity',

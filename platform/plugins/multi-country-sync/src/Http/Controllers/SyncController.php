@@ -231,6 +231,88 @@ class SyncController extends BaseController
         return $data;
     }
 
+    protected function ensureSlugUniqueness(array $data): array
+    {
+        // If slug is provided, ensure it's unique
+        if (isset($data['slug']) && !empty($data['slug'])) {
+            $slug = $data['slug'];
+            $productId = null;
+            
+            // If updating existing product, exclude current product from uniqueness check
+            $existingProduct = $this->findExistingProduct($data);
+            if ($existingProduct) {
+                $productId = $existingProduct->id;
+            }
+            
+            // Check if slug already exists
+            $exists = Product::query()
+                ->where('slug', $slug)
+                ->when($productId, fn($query) => $query->where('id', '!=', $productId))
+                ->where('is_variation', 0)
+                ->exists();
+            
+            if ($exists) {
+                // Generate unique slug using Product's createSlug method
+                $baseSlug = $slug;
+                $counter = 1;
+                
+                do {
+                    $newSlug = $baseSlug . '-' . $counter;
+                    $counter++;
+                    
+                    $slugExists = Product::query()
+                        ->where('slug', $newSlug)
+                        ->when($productId, fn($query) => $query->where('id', '!=', $productId))
+                        ->where('is_variation', 0)
+                        ->exists();
+                } while ($slugExists);
+                
+                $data['slug'] = $newSlug;
+                
+                Log::info('Multi-Country Sync: Slug conflict resolved', [
+                    'original_slug' => $slug,
+                    'new_slug' => $newSlug,
+                    'product_id' => $productId,
+                ]);
+            }
+        } elseif (isset($data['name']) && !empty($data['name'])) {
+            // If no slug provided but name exists, generate slug from name
+            $productId = null;
+            $existingProduct = $this->findExistingProduct($data);
+            if ($existingProduct) {
+                $productId = $existingProduct->id;
+            }
+            
+            // Use Product's createSlug method if available, otherwise use Str::slug
+            if (method_exists(Product::class, 'createSlug')) {
+                $data['slug'] = Product::createSlug($data['name'], $productId);
+            } else {
+                $slug = \Illuminate\Support\Str::slug($data['name']);
+                $baseSlug = $slug;
+                $counter = 1;
+                
+                while (
+                    Product::query()
+                        ->where('slug', $slug)
+                        ->when($productId, fn($query) => $query->where('id', '!=', $productId))
+                        ->where('is_variation', 0)
+                        ->exists()
+                ) {
+                    $slug = $baseSlug . '-' . $counter++;
+                }
+                
+                $data['slug'] = $slug;
+            }
+            
+            Log::info('Multi-Country Sync: Generated slug from name', [
+                'name' => $data['name'],
+                'slug' => $data['slug'],
+            ]);
+        }
+        
+        return $data;
+    }
+
     public function deleteProduct(int $id, BaseHttpResponse $response)
     {
         $product = Product::query()
