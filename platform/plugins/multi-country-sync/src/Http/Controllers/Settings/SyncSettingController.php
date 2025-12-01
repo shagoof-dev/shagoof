@@ -9,7 +9,6 @@ use Botble\MultiCountrySync\Http\Requests\Settings\SyncSettingRequest;
 use Botble\Setting\Facades\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SyncSettingController extends BaseController
@@ -39,13 +38,6 @@ class SyncSettingController extends BaseController
         // Current country - it's required in validation, so it should always be present
         // Check validated data first, then raw input as fallback
         $currentCountry = $data['current_country'] ?? $request->input('current_country');
-        
-        // Debug: Log what we're receiving (remove in production)
-        Log::info('Current country update', [
-            'validated_data' => $data['current_country'] ?? 'not_set',
-            'raw_input' => $request->input('current_country'),
-            'final_value' => $currentCountry,
-        ]);
         
         // Always save current_country (it's required, so should always have a value)
         if ($currentCountry && in_array($currentCountry, ['eg', 'uae', 'sa'])) {
