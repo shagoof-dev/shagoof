@@ -2,7 +2,9 @@
 
 namespace Botble\MultiCountrySync\Forms\Settings;
 
+use Botble\Base\Forms\FieldOptions\LabelFieldOption;
 use Botble\Base\Forms\Fields\HtmlField;
+use Botble\Base\Forms\Fields\LabelField;
 use Botble\Base\Forms\Fields\OnOffField;
 use Botble\Base\Forms\Fields\SelectField;
 use Botble\Base\Forms\Fields\TextField;
@@ -47,7 +49,13 @@ class SyncSettingForm extends SettingForm
                     ],
                 ]
             )
-            ->addSectionTitle('UAE Instance')
+            ->add(
+                'uae_section_title',
+                LabelField::class,
+                LabelFieldOption::make()
+                    ->label('UAE Instance')
+                    ->colspan(12)
+            )
             ->add(
                 'uae_api_url',
                 TextField::class,
@@ -78,7 +86,13 @@ class SyncSettingForm extends SettingForm
                     'colspan' => 12,
                 ]
             )
-            ->addSectionTitle('SA Instance')
+            ->add(
+                'sa_section_title',
+                LabelField::class,
+                LabelFieldOption::make()
+                    ->label('SA Instance')
+                    ->colspan(12)
+            )
             ->add(
                 'sa_api_url',
                 TextField::class,
@@ -109,7 +123,13 @@ class SyncSettingForm extends SettingForm
                     'colspan' => 12,
                 ]
             )
-            ->addSectionTitle('EG Instance')
+            ->add(
+                'eg_section_title',
+                LabelField::class,
+                LabelFieldOption::make()
+                    ->label('EG Instance')
+                    ->colspan(12)
+            )
             ->add(
                 'eg_api_url',
                 TextField::class,
@@ -140,7 +160,13 @@ class SyncSettingForm extends SettingForm
                     'colspan' => 12,
                 ]
             )
-            ->addSectionTitle(trans('plugins/multi-country-sync::sync.settings.advanced'))
+            ->add(
+                'advanced_section_title',
+                LabelField::class,
+                LabelFieldOption::make()
+                    ->label(trans('plugins/multi-country-sync::sync.settings.advanced'))
+                    ->colspan(12)
+            )
             ->add(
                 'sync_on_create',
                 OnOffField::class,
