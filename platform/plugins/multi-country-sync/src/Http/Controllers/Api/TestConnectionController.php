@@ -102,12 +102,14 @@ class TestConnectionController extends BaseController
             
             if ($simpleResponse->successful() || $simpleResponse->status() < 500) {
                 return $response
+                    ->setError()
                     ->setData([
-                        'status' => 'success',
-                        'message' => 'Server is reachable (endpoint may not exist)',
+                        'status' => 'warning',
+                        'message' => 'Server is reachable but sync endpoint not found. Please activate the Multi-Country Sync plugin in this instance.',
                         'url' => $instanceConfig['url'],
+                        'status_code' => $httpResponse->status(),
                     ])
-                    ->setMessage('Server is reachable');
+                    ->setMessage('Plugin may not be activated in this instance');
             }
 
             return $response
