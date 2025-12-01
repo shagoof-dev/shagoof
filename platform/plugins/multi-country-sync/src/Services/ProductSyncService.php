@@ -3,6 +3,7 @@
 namespace Botble\MultiCountrySync\Services;
 
 use Botble\Ecommerce\Models\Product;
+use Botble\Media\Facades\RvMedia;
 use Botble\MultiCountrySync\Models\SyncLog;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -176,12 +177,37 @@ class ProductSyncService
             $data['taxes'] = $product->taxes->pluck('id')->toArray();
         }
         
-        // Handle images - ensure it's an array
+        // Handle images - convert filenames to full URLs for syncing
         if (isset($data['images'])) {
             if (is_string($data['images'])) {
                 $data['images'] = json_decode($data['images'], true) ?: [];
             } elseif (! is_array($data['images'])) {
                 $data['images'] = [];
+            }
+            
+            // Convert image filenames to full URLs so target server can download them
+            $sourceUrl = config('app.url');
+            $data['images'] = array_map(function ($image) use ($sourceUrl) {
+                if (empty($image)) {
+                    return $image;
+                }
+                
+                // If already a full URL, return as-is
+                if (filter_var($image, FILTER_VALIDATE_URL)) {
+                    return $image;
+                }
+                
+                // Convert filename to full URL
+                return rtrim($sourceUrl, '/') . '/' . ltrim(RvMedia::url($image), '/');
+            }, $data['images']);
+        }
+        
+        // Handle featured image (image field) - convert to full URL
+        if (isset($data['image']) && !empty($data['image'])) {
+            // If already a full URL, return as-is
+            if (!filter_var($data['image'], FILTER_VALIDATE_URL)) {
+                $sourceUrl = config('app.url');
+                $data['image'] = rtrim($sourceUrl, '/') . '/' . ltrim(RvMedia::url($data['image']), '/');
             }
         }
         
