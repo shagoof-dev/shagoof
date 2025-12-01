@@ -163,9 +163,13 @@ class ProductSyncService
             $data['taxes'] = $product->taxes->pluck('id')->toArray();
         }
         
-        // Handle images
+        // Handle images - ensure it's an array
         if (isset($data['images'])) {
-            $data['images'] = json_decode($data['images'], true) ?: [];
+            if (is_string($data['images'])) {
+                $data['images'] = json_decode($data['images'], true) ?: [];
+            } elseif (! is_array($data['images'])) {
+                $data['images'] = [];
+            }
         }
         
         // Handle dates
