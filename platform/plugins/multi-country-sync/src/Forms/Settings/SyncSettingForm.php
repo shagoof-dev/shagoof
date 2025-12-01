@@ -11,6 +11,7 @@ use Botble\Base\Forms\Fields\SelectField;
 use Botble\Base\Forms\Fields\TextField;
 use Botble\MultiCountrySync\Http\Requests\Settings\SyncSettingRequest;
 use Botble\Setting\Forms\SettingForm;
+use Botble\Setting\Models\Setting as SettingModel;
 
 class SyncSettingForm extends SettingForm
 {
