@@ -2,6 +2,7 @@
 
 namespace Botble\MultiCountrySync\Forms\Settings;
 
+use Botble\Base\Facades\Assets;
 use Botble\Base\Forms\FieldOptions\LabelFieldOption;
 use Botble\Base\Forms\Fields\HtmlField;
 use Botble\Base\Forms\Fields\LabelField;
@@ -16,6 +17,8 @@ class SyncSettingForm extends SettingForm
     public function setup(): void
     {
         parent::setup();
+
+        Assets::addScriptsDirectly('vendor/core/plugins/multi-country-sync/js/settings.js');
 
         $this
             ->setSectionTitle(trans('plugins/multi-country-sync::sync.settings.title'))
