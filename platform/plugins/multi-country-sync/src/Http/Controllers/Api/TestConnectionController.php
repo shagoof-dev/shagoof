@@ -63,18 +63,15 @@ class TestConnectionController extends BaseController
 
         try {
             // Try to make a simple request to test connection
-            // Use the sync API endpoint with a test request
-            $testUrl = rtrim($instanceConfig['url'], '/') . '/api/sync/test-connection';
+            // Use the sync API test endpoint
+            $testUrl = rtrim($instanceConfig['url'], '/') . '/api/sync/test';
             
             $httpResponse = \Illuminate\Support\Facades\Http::timeout(10)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . ($instanceConfig['api_key'] ?? ''),
                     'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
                 ])
-                ->post($testUrl, [
-                    'test' => true,
-                ]);
+                ->get($testUrl);
 
             if ($httpResponse->successful()) {
                 return $response
