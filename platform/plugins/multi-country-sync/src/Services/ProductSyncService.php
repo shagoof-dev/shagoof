@@ -16,34 +16,97 @@ class ProductSyncService
 
     public function syncProduct(Product $product, string $action = 'create'): void
     {
+        Log::info('ProductSyncService: Starting sync', [
+            'product_id' => $product->id,
+            'action' => $action,
+        ]);
+
         $instances = config('plugins.multi-country-sync.sync.instances', []);
         $currentCountry = config('plugins.multi-country-sync.sync.current_country', 'eg');
 
+        Log::info('ProductSyncService: Config loaded', [
+            'current_country' => $currentCountry,
+            'instances_count' => is_array($instances) ? count($instances) : 0,
+            'instances' => array_keys($instances ?? []),
+        ]);
+
+        if (! is_array($instances) || empty($instances)) {
+            Log::warning('ProductSyncService: No instances configured', [
+                'product_id' => $product->id,
+            ]);
+            return;
+        }
+
+        $syncedCount = 0;
         foreach ($instances as $instanceKey => $instance) {
             // Skip current country
             if ($instanceKey === $currentCountry) {
+                Log::debug('ProductSyncService: Skipping current country', [
+                    'instance' => $instanceKey,
+                    'current_country' => $currentCountry,
+                ]);
                 continue;
             }
 
             if (! ($instance['enabled'] ?? true)) {
+                Log::debug('ProductSyncService: Instance disabled', [
+                    'instance' => $instanceKey,
+                ]);
+                continue;
+            }
+
+            if (empty($instance['url']) || empty($instance['api_key'])) {
+                Log::warning('ProductSyncService: Instance missing URL or API key', [
+                    'instance' => $instanceKey,
+                    'has_url' => !empty($instance['url']),
+                    'has_api_key' => !empty($instance['api_key']),
+                ]);
                 continue;
             }
 
             try {
-                $this->syncToInstance($product, $instance, $instanceKey, $action);
-            } catch (Exception $e) {
-                Log::error("Failed to sync product {$product->id} to {$instanceKey}: " . $e->getMessage());
-                
-                // Log sync failure
-                SyncLog::create([
+                Log::info('ProductSyncService: Syncing to instance', [
                     'product_id' => $product->id,
                     'instance' => $instanceKey,
                     'action' => $action,
-                    'status' => 'failed',
-                    'error_message' => $e->getMessage(),
                 ]);
+                
+                $this->syncToInstance($product, $instance, $instanceKey, $action);
+                $syncedCount++;
+                
+                Log::info('ProductSyncService: Successfully synced to instance', [
+                    'product_id' => $product->id,
+                    'instance' => $instanceKey,
+                ]);
+            } catch (Exception $e) {
+                Log::error("ProductSyncService: Failed to sync product {$product->id} to {$instanceKey}", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                
+                // Log sync failure
+                try {
+                    SyncLog::create([
+                        'product_id' => $product->id,
+                        'instance' => $instanceKey,
+                        'action' => $action,
+                        'status' => 'failed',
+                        'error_message' => $e->getMessage(),
+                    ]);
+                } catch (Exception $logException) {
+                    Log::error('ProductSyncService: Failed to create sync log', [
+                        'error' => $logException->getMessage(),
+                    ]);
+                }
             }
         }
+
+        Log::info('ProductSyncService: Sync completed', [
+            'product_id' => $product->id,
+            'action' => $action,
+            'synced_count' => $syncedCount,
+            'total_instances' => count($instances),
+        ]);
     }
 
     protected function syncToInstance(Product $product, array $instance, string $instanceKey, string $action): void
