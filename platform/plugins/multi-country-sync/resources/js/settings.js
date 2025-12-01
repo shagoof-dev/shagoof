@@ -95,18 +95,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const testConnectionResult = document.getElementById('test-connection-result');
         
         if (!testConnectionBtn || !testConnectionResult) {
-            // Retry after a short delay if elements not found
-            setTimeout(initTestConnection, 100);
+            // Retry after a short delay if elements not found (max 10 attempts)
+            if (typeof initTestConnection.retries === 'undefined') {
+                initTestConnection.retries = 0;
+            }
+            initTestConnection.retries++;
+            if (initTestConnection.retries < 10) {
+                setTimeout(initTestConnection, 200);
+            } else {
+                console.warn('Test connection button not found after 10 attempts');
+            }
             return;
+        }
+        
+        // Ensure button type is button, not submit
+        if (testConnectionBtn.type !== 'button') {
+            testConnectionBtn.type = 'button';
         }
         
         // Remove any existing listeners by cloning the button
         const newBtn = testConnectionBtn.cloneNode(true);
         testConnectionBtn.parentNode.replaceChild(newBtn, testConnectionBtn);
         
+        console.log('Test connection button initialized');
+        
         newBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Test connection button clicked');
             const instances = ['uae', 'sa', 'eg'];
             const currentCountryInput = document.querySelector('[name="current_country"]');
             const currentCountry = currentCountryInput ? currentCountryInput.value : 'eg';
