@@ -31,10 +31,21 @@ class SyncSettingController extends BaseController
             $settings['multi_country_sync_enabled'] = $data['multi_country_sync_enabled'] ? '1' : '0';
         }
         
-        // Current country - always save if present in request
-        $currentCountry = $request->input('current_country') ?? $request->input('multi_country_sync_current_country');
+        // Current country - check validated data first, then raw input
+        $currentCountry = null;
+        if (isset($data['current_country'])) {
+            $currentCountry = $data['current_country'];
+        } else {
+            $currentCountry = $request->input('current_country');
+        }
+        
+        // Always save current_country if it's valid (it's required in validation)
         if ($currentCountry && in_array($currentCountry, ['eg', 'uae', 'sa'])) {
             $settings['multi_country_sync_current_country'] = (string) $currentCountry;
+        } else {
+            // If not provided, keep existing value or default to 'eg'
+            $existing = setting('multi_country_sync_current_country', 'eg');
+            $settings['multi_country_sync_current_country'] = (string) $existing;
         }
         
         // UAE settings
