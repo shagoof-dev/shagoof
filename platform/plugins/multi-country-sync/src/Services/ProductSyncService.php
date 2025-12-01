@@ -198,7 +198,16 @@ class ProductSyncService
                 }
                 
                 // Convert filename to full URL
-                return rtrim($sourceUrl, '/') . '/' . ltrim(RvMedia::url($image), '/');
+                // RvMedia::url() returns a full URL, so we need to use it directly
+                $fullUrl = RvMedia::url($image);
+                
+                // If RvMedia::url() already returns a full URL, use it
+                if (filter_var($fullUrl, FILTER_VALIDATE_URL)) {
+                    return $fullUrl;
+                }
+                
+                // Otherwise, prepend the source URL
+                return rtrim($sourceUrl, '/') . '/' . ltrim($fullUrl, '/');
             }, $data['images']);
         }
         
@@ -207,7 +216,15 @@ class ProductSyncService
             // If already a full URL, return as-is
             if (!filter_var($data['image'], FILTER_VALIDATE_URL)) {
                 $sourceUrl = config('app.url');
-                $data['image'] = rtrim($sourceUrl, '/') . '/' . ltrim(RvMedia::url($data['image']), '/');
+                $fullUrl = RvMedia::url($data['image']);
+                
+                // If RvMedia::url() already returns a full URL, use it
+                if (filter_var($fullUrl, FILTER_VALIDATE_URL)) {
+                    $data['image'] = $fullUrl;
+                } else {
+                    // Otherwise, prepend the source URL
+                    $data['image'] = rtrim($sourceUrl, '/') . '/' . ltrim($fullUrl, '/');
+                }
             }
         }
         

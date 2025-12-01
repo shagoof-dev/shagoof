@@ -118,6 +118,7 @@ class SyncController extends BaseController
                 // If it's already a local filename (not a URL), use it as-is
                 if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                     $uploadedImages[] = $imageUrl;
+                    Log::debug('Multi-Country Sync: Image already local path', ['path' => $imageUrl]);
                     continue;
                 }
                 
@@ -127,31 +128,52 @@ class SyncController extends BaseController
                     
                     $result = RvMedia::uploadFromUrl($imageUrl, 0, 'products');
                     
-                    if (!($result['error'] ?? true) && isset($result['data'])) {
-                        $uploadedImages[] = $result['data']->url;
+                    // Check result structure
+                    Log::debug('Multi-Country Sync: uploadFromUrl result', [
+                        'has_error' => isset($result['error']),
+                        'error' => $result['error'] ?? null,
+                        'has_data' => isset($result['data']),
+                        'data_type' => isset($result['data']) ? get_class($result['data']) : null,
+                    ]);
+                    
+                    if (isset($result['error']) && $result['error'] === false && isset($result['data'])) {
+                        // Get the relative path from MediaFile model
+                        $mediaFile = $result['data'];
+                        $imagePath = $mediaFile->url; // This should be the relative path
+                        
+                        $uploadedImages[] = $imagePath;
                         Log::info('Multi-Country Sync: Image uploaded successfully', [
                             'original_url' => $imageUrl,
-                            'new_path' => $result['data']->url,
+                            'new_path' => $imagePath,
+                            'media_file_id' => $mediaFile->id ?? null,
                         ]);
                     } else {
+                        $errorMessage = $result['message'] ?? 'Unknown error';
                         Log::warning('Multi-Country Sync: Failed to upload image', [
                             'url' => $imageUrl,
-                            'error' => $result['message'] ?? 'Unknown error',
+                            'error' => $errorMessage,
+                            'result' => $result,
                         ]);
-                        // Keep original URL if upload fails (might be external URL)
-                        $uploadedImages[] = $imageUrl;
+                        // Don't add failed images - skip them
+                        continue;
                     }
                 } catch (\Exception $e) {
                     Log::error('Multi-Country Sync: Exception uploading image', [
                         'url' => $imageUrl,
                         'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
                     ]);
-                    // Keep original URL if upload fails
-                    $uploadedImages[] = $imageUrl;
+                    // Don't add failed images - skip them
+                    continue;
                 }
             }
             
             $data['images'] = $uploadedImages;
+            Log::info('Multi-Country Sync: Processed images', [
+                'original_count' => count($data['images'] ?? []),
+                'uploaded_count' => count($uploadedImages),
+                'final_images' => $uploadedImages,
+            ]);
         }
         
         // Process featured image (image field)
@@ -161,6 +183,7 @@ class SyncController extends BaseController
             // If it's already a local filename (not a URL), use it as-is
             if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                 // Already a local path, keep it
+                Log::debug('Multi-Country Sync: Featured image already local path', ['path' => $imageUrl]);
                 return $data;
             }
             
@@ -170,25 +193,38 @@ class SyncController extends BaseController
                 
                 $result = RvMedia::uploadFromUrl($imageUrl, 0, 'products');
                 
-                if (!($result['error'] ?? true) && isset($result['data'])) {
-                    $data['image'] = $result['data']->url;
+                Log::debug('Multi-Country Sync: uploadFromUrl result for featured image', [
+                    'has_error' => isset($result['error']),
+                    'error' => $result['error'] ?? null,
+                    'has_data' => isset($result['data']),
+                ]);
+                
+                if (isset($result['error']) && $result['error'] === false && isset($result['data'])) {
+                    $mediaFile = $result['data'];
+                    $data['image'] = $mediaFile->url;
                     Log::info('Multi-Country Sync: Featured image uploaded successfully', [
                         'original_url' => $imageUrl,
-                        'new_path' => $result['data']->url,
+                        'new_path' => $mediaFile->url,
+                        'media_file_id' => $mediaFile->id ?? null,
                     ]);
                 } else {
+                    $errorMessage = $result['message'] ?? 'Unknown error';
                     Log::warning('Multi-Country Sync: Failed to upload featured image', [
                         'url' => $imageUrl,
-                        'error' => $result['message'] ?? 'Unknown error',
+                        'error' => $errorMessage,
+                        'result' => $result,
                     ]);
-                    // Keep original URL if upload fails
+                    // Remove image if upload fails
+                    unset($data['image']);
                 }
             } catch (\Exception $e) {
                 Log::error('Multi-Country Sync: Exception uploading featured image', [
                     'url' => $imageUrl,
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                 ]);
-                // Keep original URL if upload fails
+                // Remove image if upload fails
+                unset($data['image']);
             }
         }
         
