@@ -8,6 +8,8 @@ use Botble\MultiCountrySync\Forms\Settings\SyncSettingForm;
 use Botble\MultiCountrySync\Http\Requests\Settings\SyncSettingRequest;
 use Botble\Setting\Facades\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SyncSettingController extends BaseController
@@ -36,7 +38,7 @@ class SyncSettingController extends BaseController
         $currentCountry = $data['current_country'] ?? $request->input('current_country');
         
         // Debug: Log what we're receiving (remove in production)
-        \Log::info('Current country update', [
+        Log::info('Current country update', [
             'validated_data' => $data['current_country'] ?? 'not_set',
             'raw_input' => $request->input('current_country'),
             'final_value' => $currentCountry,
@@ -108,7 +110,7 @@ class SyncSettingController extends BaseController
         if (function_exists('config')) {
             config()->forget('plugins.multi-country-sync.sync');
         }
-        \Artisan::call('config:clear');
+        Artisan::call('config:clear');
 
         return $response
             ->setPreviousUrl(route('multi-country-sync.settings'))
