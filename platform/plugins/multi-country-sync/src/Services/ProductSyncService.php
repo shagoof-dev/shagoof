@@ -140,6 +140,19 @@ class ProductSyncService
         // Remove excluded fields
         $data = array_diff_key($data, array_flip($excludeFields));
         
+        // Convert enum values to strings for API compatibility
+        foreach ($data as $key => $value) {
+            if ($value instanceof \Botble\Base\Enums\BaseStatusEnum) {
+                $data[$key] = $value->getValue();
+            } elseif ($value instanceof \Botble\Ecommerce\Enums\StockStatusEnum) {
+                $data[$key] = $value->getValue();
+            } elseif ($value instanceof \Botble\Ecommerce\Enums\ProductTypeEnum) {
+                $data[$key] = $value->getValue();
+            } elseif (is_object($value) && method_exists($value, 'getValue')) {
+                $data[$key] = $value->getValue();
+            }
+        }
+        
         // Add relationships
         $syncRelationships = config('plugins.multi-country-sync.sync.sync_relationships', []);
         
