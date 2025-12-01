@@ -17,6 +17,9 @@ class SyncSettingController extends BaseController
     public function edit()
     {
         $this->pageTitle(trans('plugins/multi-country-sync::sync.settings.title'));
+        
+        // Force reload settings from database to ensure fresh values
+        Setting::load();
 
         return SyncSettingForm::create()->renderForm();
     }

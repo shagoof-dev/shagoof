@@ -19,6 +19,9 @@ class SyncSettingForm extends SettingForm
         parent::setup();
 
         Assets::addScriptsDirectly('vendor/core/plugins/multi-country-sync/js/settings.js');
+        
+        // Force reload settings from database (bypass cache)
+        \Botble\Setting\Facades\Setting::load();
 
         $this
             ->setSectionTitle(trans('plugins/multi-country-sync::sync.settings.title'))
@@ -42,6 +45,7 @@ class SyncSettingForm extends SettingForm
                 [
                     'label' => trans('plugins/multi-country-sync::sync.settings.current_country'),
                     'value' => setting('multi_country_sync_current_country', 'eg'),
+                    'selected' => setting('multi_country_sync_current_country', 'eg'),
                     'choices' => [
                         'eg' => 'Egypt (EG)',
                         'uae' => 'United Arab Emirates (UAE)',
