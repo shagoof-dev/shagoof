@@ -15,12 +15,11 @@ class SyncProductJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public string $queue = 'product-sync';
-
     public function __construct(
         public int $productId,
         public string $action // 'create' or 'update'
     ) {
+        $this->onQueue(config('plugins.multi-country-sync.sync.queue_name', 'product-sync'));
     }
 
     public function handle(ProductSyncService $syncService): void
