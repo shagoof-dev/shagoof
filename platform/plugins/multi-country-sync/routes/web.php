@@ -24,7 +24,7 @@ AdminHelper::registerRoutes(function (): void {
 
                 Route::post('test-connection', [
                     'as' => 'settings.test-connection',
-                    'uses' => TestConnectionController::class . '@test',
+                    'uses' => '\\' . TestConnectionController::class . '@test',
                     'permission' => 'multi-country-sync.settings',
                 ]);
 
