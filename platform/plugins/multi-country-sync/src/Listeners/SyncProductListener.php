@@ -9,17 +9,13 @@ use Botble\Ecommerce\Models\Product;
 use Botble\MultiCountrySync\Services\ProductSyncService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class SyncProductListener implements ShouldQueue
 {
-    use InteractsWithQueue;
+    use InteractsWithQueue, SerializesModels;
 
     public string $queue = 'product-sync';
-
-    public function __construct(
-        protected ProductSyncService $syncService
-    ) {
-    }
 
     public function handle(CreatedContentEvent|UpdatedContentEvent $event): void
     {
@@ -35,9 +31,17 @@ class SyncProductListener implements ShouldQueue
             return;
         }
 
-        $product = $event->data;
+        // Get product ID from event and reload fresh instance to avoid serialization issues
+        $productId = $event->data->id ?? null;
+        
+        if (! $productId) {
+            return;
+        }
 
-        if (! $product instanceof Product) {
+        // Reload product fresh from database to avoid serialization issues with relationships
+        $product = Product::query()->find($productId);
+
+        if (! $product) {
             return;
         }
 
@@ -56,14 +60,17 @@ class SyncProductListener implements ShouldQueue
             return;
         }
 
+        // Resolve service from container to avoid serialization issues
+        $syncService = app(ProductSyncService::class);
+
         // Sync product to other instances
         if ($event instanceof CreatedContentEvent) {
             if (config('plugins.multi-country-sync.sync.sync_on_create', true)) {
-                $this->syncService->syncProduct($product, 'create');
+                $syncService->syncProduct($product, 'create');
             }
         } else {
             if (config('plugins.multi-country-sync.sync.sync_on_update', true)) {
-                $this->syncService->syncProduct($product, 'update');
+                $syncService->syncProduct($product, 'update');
             }
         }
     }
