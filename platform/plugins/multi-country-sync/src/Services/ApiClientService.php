@@ -8,8 +8,14 @@ use Illuminate\Support\Facades\Log;
 
 class ApiClientService
 {
-    protected int $timeout = 30;
+    protected int $timeout;
     protected int $maxRetries = 3;
+
+    public function __construct()
+    {
+        // Set timeout from config, default to 300 seconds (5 minutes) for image-heavy syncs
+        $this->timeout = (int) config('plugins.multi-country-sync.sync.api_timeout', 300);
+    }
 
     public function createProduct(string $baseUrl, string $apiKey, array $productData): array
     {
@@ -32,9 +38,34 @@ class ApiClientService
         $maxRetries = config('plugins.multi-country-sync.sync.max_retries', $this->maxRetries);
         $retryDelay = config('plugins.multi-country-sync.sync.retry_delay', 60);
         
+        // Get timeout from config (may have been updated)
+        $timeout = config('plugins.multi-country-sync.sync.api_timeout', $this->timeout);
+        
+        // Check if request has images - increase timeout for image-heavy requests
+        $hasImages = isset($data['images']) && !empty($data['images']);
+        if ($hasImages) {
+            // Add extra time per image (30 seconds per image, minimum 5 minutes)
+            $imageCount = count($data['images']);
+            $calculatedTimeout = max($timeout, 300 + ($imageCount * 30));
+            Log::debug('Multi-Country Sync API: Image-heavy request detected', [
+                'image_count' => $imageCount,
+                'base_timeout' => $timeout,
+                'calculated_timeout' => $calculatedTimeout,
+            ]);
+            $timeout = $calculatedTimeout;
+        }
+        
+        Log::debug('Multi-Country Sync API: Making request', [
+            'method' => $method,
+            'url' => $url,
+            'timeout' => $timeout,
+            'has_images' => $hasImages,
+        ]);
+        
         while ($retries < $maxRetries) {
             try {
-                $response = Http::timeout($this->timeout)
+                $response = Http::timeout($timeout)
+                    ->connectTimeout(30) // Connection timeout separate from request timeout
                     ->withHeaders([
                         'Authorization' => "Bearer {$apiKey}",
                         'Accept' => 'application/json',

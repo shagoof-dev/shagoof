@@ -41,9 +41,12 @@ return [
     'use_queue' => $getSetting('multi_country_sync_use_queue', true),
     'queue_name' => 'product-sync',
     
-    // Retry settings
-    'max_retries' => (int) $getSetting('multi_country_sync_max_retries', 3),
-    'retry_delay' => (int) $getSetting('multi_country_sync_retry_delay', 60), // seconds
+           // Retry settings
+           'max_retries' => (int) $getSetting('multi_country_sync_max_retries', 3),
+           'retry_delay' => (int) $getSetting('multi_country_sync_retry_delay', 60), // seconds
+
+           // API timeout (in seconds) - increased for image-heavy syncs
+           'api_timeout' => (int) $getSetting('multi_country_sync_api_timeout', 300), // 5 minutes default
     
     // Fields to sync
     'sync_fields' => [
