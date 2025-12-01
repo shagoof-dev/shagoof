@@ -89,12 +89,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Test Connection
-    const testConnectionBtn = document.getElementById('test-connection-btn');
-    const testConnectionResult = document.getElementById('test-connection-result');
-    
-    if (testConnectionBtn && testConnectionResult) {
-        testConnectionBtn.addEventListener('click', function() {
+    // Test Connection - Use event delegation to handle dynamically added buttons
+    function initTestConnection() {
+        const testConnectionBtn = document.getElementById('test-connection-btn');
+        const testConnectionResult = document.getElementById('test-connection-result');
+        
+        if (!testConnectionBtn || !testConnectionResult) {
+            // Retry after a short delay if elements not found
+            setTimeout(initTestConnection, 100);
+            return;
+        }
+        
+        // Remove any existing listeners by cloning the button
+        const newBtn = testConnectionBtn.cloneNode(true);
+        testConnectionBtn.parentNode.replaceChild(newBtn, testConnectionBtn);
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             const instances = ['uae', 'sa', 'eg'];
             const currentCountryInput = document.querySelector('[name="current_country"]');
             const currentCountry = currentCountryInput ? currentCountryInput.value : 'eg';
@@ -105,8 +117,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            testConnectionBtn.disabled = true;
-            testConnectionBtn.innerHTML = '<i class="ti ti-loader"></i> Testing...';
+            newBtn.disabled = true;
+            newBtn.innerHTML = '<i class="ti ti-loader"></i> Testing...';
             testConnectionResult.innerHTML = '';
             
             let completed = 0;
@@ -166,8 +178,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             function checkComplete() {
                 if (completed === enabledInstances.length) {
-                    testConnectionBtn.disabled = false;
-                    testConnectionBtn.innerHTML = '<i class="ti ti-plug"></i> Test Connection';
+                    newBtn.disabled = false;
+                    newBtn.innerHTML = '<i class="ti ti-plug"></i> Test Connection';
                     
                     let html = '<div class="mt-2">';
                     results.forEach(r => {
@@ -183,5 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Initialize test connection handler
+    initTestConnection();
 });
 
