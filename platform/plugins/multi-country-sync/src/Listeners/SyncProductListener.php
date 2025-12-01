@@ -79,14 +79,15 @@ class SyncProductListener
         $useQueue = config('plugins.multi-country-sync.sync.use_queue', true);
 
         if ($useQueue) {
-            // Dispatch job to queue
+            // Dispatch job to queue AFTER response is sent to avoid blocking
             Log::info('Multi-Country Sync: Dispatching job to queue', [
                 'product_id' => $product->id,
                 'action' => $action,
                 'queue' => config('plugins.multi-country-sync.sync.queue_name', 'product-sync'),
             ]);
             SyncProductJob::dispatch($product->id, $action)
-                ->onQueue(config('plugins.multi-country-sync.sync.queue_name', 'product-sync'));
+                ->onQueue(config('plugins.multi-country-sync.sync.queue_name', 'product-sync'))
+                ->afterResponse(); // Run after HTTP response is sent to client
         } else {
             // Run synchronously
             Log::info('Multi-Country Sync: Running synchronously', [
