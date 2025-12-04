@@ -10,8 +10,12 @@ use Botble\Ecommerce\Models\Product;
 use Botble\Ecommerce\Services\Products\StoreProductService;
 use Botble\Media\Facades\RvMedia;
 use Botble\MultiCountrySync\Http\Requests\SyncProductRequest;
+use Botble\Slug\Facades\SlugHelper;
+use Botble\Slug\Models\Slug;
+use Botble\Slug\Services\SlugService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SyncController extends BaseController
 {
@@ -27,8 +31,14 @@ class SyncController extends BaseController
         // Download and upload images from source server
         $data = $this->processImages($data);
         
+        // Ensure slug uniqueness and generate if needed
+        $data = $this->ensureSlugUniqueness($data);
+        
         // Check if product already exists (by source_product_id or SKU)
         $product = $this->findExistingProduct($data);
+        
+        // Set is_slug_editable to ensure slug is created in slugs table
+        $data['is_slug_editable'] = 1;
         
         if ($product) {
             // Update existing product
@@ -37,6 +47,9 @@ class SyncController extends BaseController
                 $product,
                 true
             );
+            
+            // Ensure slug entry exists in slugs table
+            $this->ensureSlugEntry($product, $data['slug'] ?? null);
             
             return $response
                 ->setData(['product_id' => $product->id, 'action' => 'updated'])
@@ -51,6 +64,9 @@ class SyncController extends BaseController
             $product,
             true
         );
+        
+        // Ensure slug entry exists in slugs table
+        $this->ensureSlugEntry($product, $data['slug'] ?? null);
         
         // Store sync metadata
         if (isset($data['sync_metadata'])) {
@@ -231,82 +247,125 @@ class SyncController extends BaseController
         return $data;
     }
 
+    protected function ensureSlugEntry(Product $product, ?string $slug = null): void
+    {
+        // If slug is not provided, use the product's slug or generate from name
+        if (empty($slug)) {
+            $slug = $product->slug;
+            if (empty($slug) && !empty($product->name)) {
+                $slug = Str::slug($product->name);
+            }
+        }
+        
+        if (empty($slug)) {
+            Log::warning('Multi-Country Sync: Cannot create slug entry - no slug or name available', [
+                'product_id' => $product->id,
+            ]);
+            return;
+        }
+        
+        // Check if slug entry already exists
+        $existingSlug = Slug::query()
+            ->where('reference_type', Product::class)
+            ->where('reference_id', $product->id)
+            ->first();
+        
+        if ($existingSlug) {
+            // Update existing slug if different
+            if ($existingSlug->key !== $slug) {
+                $slugService = new SlugService();
+                $uniqueSlug = $slugService->create($slug, $existingSlug->id, Product::class);
+                
+                $existingSlug->key = $uniqueSlug;
+                $existingSlug->saveQuietly();
+                
+                // Update product slug column
+                $product->slug = $uniqueSlug;
+                $product->saveQuietly();
+                
+                Log::info('Multi-Country Sync: Updated slug entry', [
+                    'product_id' => $product->id,
+                    'old_slug' => $existingSlug->key,
+                    'new_slug' => $uniqueSlug,
+                ]);
+            }
+            return;
+        }
+        
+        // Create new slug entry
+        try {
+            $slugService = new SlugService();
+            $uniqueSlug = $slugService->create($slug, 0, Product::class);
+            
+            Slug::query()->create([
+                'key' => $uniqueSlug,
+                'reference_type' => Product::class,
+                'reference_id' => $product->id,
+                'prefix' => SlugHelper::getPrefix(Product::class, '', false),
+            ]);
+            
+            // Update product slug column
+            $product->slug = $uniqueSlug;
+            $product->saveQuietly();
+            
+            Log::info('Multi-Country Sync: Created slug entry', [
+                'product_id' => $product->id,
+                'slug' => $uniqueSlug,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Multi-Country Sync: Failed to create slug entry', [
+                'product_id' => $product->id,
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     protected function ensureSlugUniqueness(array $data): array
     {
-        // If slug is provided, ensure it's unique
+        $slugService = new SlugService();
+        $productId = null;
+        
+        // If updating existing product, get its ID for slug uniqueness check
+        $existingProduct = $this->findExistingProduct($data);
+        if ($existingProduct) {
+            $productId = $existingProduct->id;
+            
+            // Get existing slug ID if slug entry exists
+            $existingSlug = Slug::query()
+                ->where('reference_type', Product::class)
+                ->where('reference_id', $productId)
+                ->first();
+            
+            if ($existingSlug) {
+                $productId = $existingSlug->id; // Use slug ID for uniqueness check
+            }
+        }
+        
+        // If slug is provided, ensure it's unique using SlugService
         if (isset($data['slug']) && !empty($data['slug'])) {
             $slug = $data['slug'];
-            $productId = null;
+            $uniqueSlug = $slugService->create($slug, $productId ?? 0, Product::class);
             
-            // If updating existing product, exclude current product from uniqueness check
-            $existingProduct = $this->findExistingProduct($data);
-            if ($existingProduct) {
-                $productId = $existingProduct->id;
-            }
-            
-            // Check if slug already exists
-            $exists = Product::query()
-                ->where('slug', $slug)
-                ->when($productId, fn($query) => $query->where('id', '!=', $productId))
-                ->where('is_variation', 0)
-                ->exists();
-            
-            if ($exists) {
-                // Generate unique slug using Product's createSlug method
-                $baseSlug = $slug;
-                $counter = 1;
-                
-                do {
-                    $newSlug = $baseSlug . '-' . $counter;
-                    $counter++;
-                    
-                    $slugExists = Product::query()
-                        ->where('slug', $newSlug)
-                        ->when($productId, fn($query) => $query->where('id', '!=', $productId))
-                        ->where('is_variation', 0)
-                        ->exists();
-                } while ($slugExists);
-                
-                $data['slug'] = $newSlug;
-                
+            if ($uniqueSlug !== $slug) {
                 Log::info('Multi-Country Sync: Slug conflict resolved', [
                     'original_slug' => $slug,
-                    'new_slug' => $newSlug,
+                    'new_slug' => $uniqueSlug,
                     'product_id' => $productId,
                 ]);
             }
+            
+            $data['slug'] = $uniqueSlug;
         } elseif (isset($data['name']) && !empty($data['name'])) {
             // If no slug provided but name exists, generate slug from name
-            $productId = null;
-            $existingProduct = $this->findExistingProduct($data);
-            if ($existingProduct) {
-                $productId = $existingProduct->id;
-            }
+            $slug = Str::slug($data['name']);
+            $uniqueSlug = $slugService->create($slug, $productId ?? 0, Product::class);
             
-            // Use Product's createSlug method if available, otherwise use Str::slug
-            if (method_exists(Product::class, 'createSlug')) {
-                $data['slug'] = Product::createSlug($data['name'], $productId);
-            } else {
-                $slug = \Illuminate\Support\Str::slug($data['name']);
-                $baseSlug = $slug;
-                $counter = 1;
-                
-                while (
-                    Product::query()
-                        ->where('slug', $slug)
-                        ->when($productId, fn($query) => $query->where('id', '!=', $productId))
-                        ->where('is_variation', 0)
-                        ->exists()
-                ) {
-                    $slug = $baseSlug . '-' . $counter++;
-                }
-                
-                $data['slug'] = $slug;
-            }
+            $data['slug'] = $uniqueSlug;
             
             Log::info('Multi-Country Sync: Generated slug from name', [
                 'name' => $data['name'],
-                'slug' => $data['slug'],
+                'slug' => $uniqueSlug,
             ]);
         }
         
