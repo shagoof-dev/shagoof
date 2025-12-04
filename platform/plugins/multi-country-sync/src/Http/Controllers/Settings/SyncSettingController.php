@@ -97,6 +97,40 @@ class SyncSettingController extends BaseController
         if (isset($data['retry_delay'])) {
             $settings['multi_country_sync_retry_delay'] = (string) $data['retry_delay'];
         }
+        
+        // Currency conversion settings
+        if (isset($data['convert_currency'])) {
+            $settings['multi_country_sync_convert_currency'] = $data['convert_currency'] ? '1' : '0';
+        }
+        if (isset($data['eg_currency'])) {
+            $settings['multi_country_sync_eg_currency'] = strtoupper($data['eg_currency']);
+        }
+        if (isset($data['uae_currency'])) {
+            $settings['multi_country_sync_uae_currency'] = strtoupper($data['uae_currency']);
+        }
+        if (isset($data['sa_currency'])) {
+            $settings['multi_country_sync_sa_currency'] = strtoupper($data['sa_currency']);
+        }
+        
+        // Exchange rates
+        if (isset($data['eg_to_sa_rate'])) {
+            $settings['multi_country_sync_eg_to_sa_rate'] = (string) $data['eg_to_sa_rate'];
+        }
+        if (isset($data['eg_to_uae_rate'])) {
+            $settings['multi_country_sync_eg_to_uae_rate'] = (string) $data['eg_to_uae_rate'];
+        }
+        if (isset($data['sa_to_eg_rate'])) {
+            $settings['multi_country_sync_sa_to_eg_rate'] = (string) $data['sa_to_eg_rate'];
+        }
+        if (isset($data['uae_to_eg_rate'])) {
+            $settings['multi_country_sync_uae_to_eg_rate'] = (string) $data['uae_to_eg_rate'];
+        }
+        if (isset($data['sa_to_uae_rate'])) {
+            $settings['multi_country_sync_sa_to_uae_rate'] = (string) $data['sa_to_uae_rate'];
+        }
+        if (isset($data['uae_to_sa_rate'])) {
+            $settings['multi_country_sync_uae_to_sa_rate'] = (string) $data['uae_to_sa_rate'];
+        }
 
         // Save all settings
         Setting::set($settings)->save();

@@ -5,13 +5,15 @@ namespace Botble\MultiCountrySync\Services;
 use Botble\Ecommerce\Models\Product;
 use Botble\Media\Facades\RvMedia;
 use Botble\MultiCountrySync\Models\SyncLog;
+use Botble\MultiCountrySync\Services\CurrencyConversionService;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
 class ProductSyncService
 {
     public function __construct(
-        protected ApiClientService $apiClient
+        protected ApiClientService $apiClient,
+        protected CurrencyConversionService $currencyConverter
     ) {
     }
 
@@ -113,6 +115,18 @@ class ProductSyncService
     protected function syncToInstance(Product $product, array $instance, string $instanceKey, string $action): void
     {
         $productData = $this->prepareProductData($product);
+        
+        // Convert currency if enabled
+        $currentCountry = config('plugins.multi-country-sync.sync.current_country', 'eg');
+        $convertCurrency = config('plugins.multi-country-sync.sync.convert_currency', true);
+        
+        if ($convertCurrency && $currentCountry !== $instanceKey) {
+            $productData = $this->currencyConverter->convertProductPrices(
+                $productData,
+                $currentCountry,
+                $instanceKey
+            );
+        }
 
         $response = match ($action) {
             'create' => $this->apiClient->createProduct($instance['url'], $instance['api_key'], $productData),

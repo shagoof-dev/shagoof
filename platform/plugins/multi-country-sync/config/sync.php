@@ -32,6 +32,28 @@ return [
         ],
     ],
     
+    // Currency for each country
+    'currencies' => [
+        'eg' => $getSetting('multi_country_sync_eg_currency', 'EGP'),
+        'uae' => $getSetting('multi_country_sync_uae_currency', 'AED'),
+        'sa' => $getSetting('multi_country_sync_sa_currency', 'SAR'),
+    ],
+    
+    // Exchange rates (base currency: EGP)
+    // Example: eg_to_sa = 0.16 means 1 EGP = 0.16 SAR
+    // Example: eg_to_uae = 0.15 means 1 EGP = 0.15 AED
+    'exchange_rates' => [
+        'eg_to_sa' => (float) $getSetting('multi_country_sync_eg_to_sa_rate', env('EG_TO_SA_RATE', 0.16)),
+        'eg_to_uae' => (float) $getSetting('multi_country_sync_eg_to_uae_rate', env('EG_TO_UAE_RATE', 0.15)),
+        'sa_to_eg' => (float) $getSetting('multi_country_sync_sa_to_eg_rate', env('SA_TO_EG_RATE', 6.25)),
+        'uae_to_eg' => (float) $getSetting('multi_country_sync_uae_to_eg_rate', env('UAE_TO_EG_RATE', 6.67)),
+        'sa_to_uae' => (float) $getSetting('multi_country_sync_sa_to_uae_rate', env('SA_TO_UAE_RATE', 0.94)),
+        'uae_to_sa' => (float) $getSetting('multi_country_sync_uae_to_sa_rate', env('UAE_TO_SA_RATE', 1.07)),
+    ],
+    
+    // Enable currency conversion
+    'convert_currency' => $getSetting('multi_country_sync_convert_currency', true),
+    
     // Sync settings
     'sync_on_create' => $getSetting('multi_country_sync_on_create', true),
     'sync_on_update' => $getSetting('multi_country_sync_on_update', true),

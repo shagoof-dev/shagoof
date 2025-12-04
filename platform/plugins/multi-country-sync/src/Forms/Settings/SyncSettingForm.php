@@ -231,6 +231,140 @@ class SyncSettingForm extends SettingForm
                 ]
             )
             ->add(
+                'currency_section_title',
+                LabelField::class,
+                LabelFieldOption::make()
+                    ->label(trans('plugins/multi-country-sync::sync.settings.currency_conversion'))
+                    ->colspan(12)
+            )
+            ->add(
+                'convert_currency',
+                OnOffField::class,
+                [
+                    'label' => trans('plugins/multi-country-sync::sync.settings.enable_currency_conversion'),
+                    'value' => setting('multi_country_sync_convert_currency', true),
+                    'help_block' => [
+                        'text' => trans('plugins/multi-country-sync::sync.settings.enable_currency_conversion_helper'),
+                    ],
+                    'colspan' => 12,
+                ]
+            )
+            ->add(
+                'eg_currency',
+                TextField::class,
+                [
+                    'label' => 'EG Currency',
+                    'value' => setting('multi_country_sync_eg_currency', 'EGP'),
+                    'placeholder' => 'EGP',
+                    'colspan' => 4,
+                ]
+            )
+            ->add(
+                'uae_currency',
+                TextField::class,
+                [
+                    'label' => 'UAE Currency',
+                    'value' => setting('multi_country_sync_uae_currency', 'AED'),
+                    'placeholder' => 'AED',
+                    'colspan' => 4,
+                ]
+            )
+            ->add(
+                'sa_currency',
+                TextField::class,
+                [
+                    'label' => 'SA Currency',
+                    'value' => setting('multi_country_sync_sa_currency', 'SAR'),
+                    'placeholder' => 'SAR',
+                    'colspan' => 4,
+                ]
+            )
+            ->add(
+                'exchange_rates_title',
+                LabelField::class,
+                LabelFieldOption::make()
+                    ->label('Exchange Rates (Base: EGP)')
+                    ->colspan(12)
+            )
+            ->add(
+                'eg_to_sa_rate',
+                TextField::class,
+                [
+                    'label' => 'EGP to SAR Rate',
+                    'value' => setting('multi_country_sync_eg_to_sa_rate', '0.16'),
+                    'placeholder' => '0.16',
+                    'help_block' => [
+                        'text' => '1 EGP = ? SAR (Example: 0.16 means 1 EGP = 0.16 SAR)',
+                    ],
+                    'colspan' => 6,
+                ]
+            )
+            ->add(
+                'eg_to_uae_rate',
+                TextField::class,
+                [
+                    'label' => 'EGP to AED Rate',
+                    'value' => setting('multi_country_sync_eg_to_uae_rate', '0.15'),
+                    'placeholder' => '0.15',
+                    'help_block' => [
+                        'text' => '1 EGP = ? AED (Example: 0.15 means 1 EGP = 0.15 AED)',
+                    ],
+                    'colspan' => 6,
+                ]
+            )
+            ->add(
+                'sa_to_eg_rate',
+                TextField::class,
+                [
+                    'label' => 'SAR to EGP Rate',
+                    'value' => setting('multi_country_sync_sa_to_eg_rate', '6.25'),
+                    'placeholder' => '6.25',
+                    'help_block' => [
+                        'text' => '1 SAR = ? EGP (Example: 6.25 means 1 SAR = 6.25 EGP)',
+                    ],
+                    'colspan' => 6,
+                ]
+            )
+            ->add(
+                'uae_to_eg_rate',
+                TextField::class,
+                [
+                    'label' => 'AED to EGP Rate',
+                    'value' => setting('multi_country_sync_uae_to_eg_rate', '6.67'),
+                    'placeholder' => '6.67',
+                    'help_block' => [
+                        'text' => '1 AED = ? EGP (Example: 6.67 means 1 AED = 6.67 EGP)',
+                    ],
+                    'colspan' => 6,
+                ]
+            )
+            ->add(
+                'sa_to_uae_rate',
+                TextField::class,
+                [
+                    'label' => 'SAR to AED Rate',
+                    'value' => setting('multi_country_sync_sa_to_uae_rate', '0.94'),
+                    'placeholder' => '0.94',
+                    'help_block' => [
+                        'text' => '1 SAR = ? AED (Example: 0.94 means 1 SAR = 0.94 AED)',
+                    ],
+                    'colspan' => 6,
+                ]
+            )
+            ->add(
+                'uae_to_sa_rate',
+                TextField::class,
+                [
+                    'label' => 'AED to SAR Rate',
+                    'value' => setting('multi_country_sync_uae_to_sa_rate', '1.07'),
+                    'placeholder' => '1.07',
+                    'help_block' => [
+                        'text' => '1 AED = ? SAR (Example: 1.07 means 1 AED = 1.07 SAR)',
+                    ],
+                    'colspan' => 6,
+                ]
+            )
+            ->add(
                 'test_connection_button',
                 HtmlField::class,
                 [

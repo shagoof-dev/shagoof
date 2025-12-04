@@ -25,6 +25,16 @@ class SyncSettingRequest extends Request
             'use_queue' => 'nullable|boolean',
             'max_retries' => 'nullable|integer|min:1|max:10',
             'retry_delay' => 'nullable|integer|min:1|max:300',
+            'convert_currency' => 'nullable|boolean',
+            'eg_currency' => 'nullable|string|max:3',
+            'uae_currency' => 'nullable|string|max:3',
+            'sa_currency' => 'nullable|string|max:3',
+            'eg_to_sa_rate' => 'nullable|numeric|min:0',
+            'eg_to_uae_rate' => 'nullable|numeric|min:0',
+            'sa_to_eg_rate' => 'nullable|numeric|min:0',
+            'uae_to_eg_rate' => 'nullable|numeric|min:0',
+            'sa_to_uae_rate' => 'nullable|numeric|min:0',
+            'uae_to_sa_rate' => 'nullable|numeric|min:0',
         ];
     }
 }
