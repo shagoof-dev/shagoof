@@ -29,6 +29,9 @@ return [
         'api_key_copy_warning' => 'Please copy this key now. It will be hidden in 10 seconds!',
         'api_key_helper' => 'Click the key icon to generate a new API key, or paste an existing key manually',
         'show_hide_key' => 'Show/Hide Key',
+        'currency_conversion' => 'Currency Conversion',
+        'enable_currency_conversion' => 'Enable Currency Conversion',
+        'enable_currency_conversion_helper' => 'When enabled, product prices will be automatically converted to the target country\'s currency using the configured exchange rates',
     ],
 ];
 
