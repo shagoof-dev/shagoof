@@ -88,23 +88,57 @@ class CurrencyConversionService
         // If converting from SAR to AED: first convert SAR -> EGP, then EGP -> AED
         if ($sourceCountry !== 'eg' && $targetCountry !== 'eg') {
             // Both are not EGP, use EGP as base
-            // First get source -> EGP rate (inverse of EGP -> source)
+            // First get source -> EGP rate
+            $sourceToEgKey = "{$sourceCountry}_to_eg";
             $egToSourceKey = "eg_to_{$sourceCountry}";
             $egToTargetKey = "eg_to_{$targetCountry}";
             
-            if (isset($exchangeRates[$egToSourceKey]) && isset($exchangeRates[$egToTargetKey])) {
-                // source -> EGP = 1 / (EGP -> source)
-                // EGP -> target = direct rate
-                // source -> target = (1 / (EGP -> source)) * (EGP -> target)
+            $sourceToEg = null;
+            if (isset($exchangeRates[$sourceToEgKey])) {
+                $sourceToEg = (float) $exchangeRates[$sourceToEgKey];
+            } elseif (isset($exchangeRates[$egToSourceKey])) {
+                // Inverse: source -> EGP = 1 / (EGP -> source)
                 $sourceToEg = 1 / (float) $exchangeRates[$egToSourceKey];
-                $egToTarget = (float) $exchangeRates[$egToTargetKey];
-                return $sourceToEg * $egToTarget;
             }
             
-            // Try reverse: source -> EGP and EGP -> target
+            // Get EGP -> target rate
+            $egToTarget = null;
+            if (isset($exchangeRates[$egToTargetKey])) {
+                $egToTarget = (float) $exchangeRates[$egToTargetKey];
+            } else {
+                $targetToEgKey = "{$targetCountry}_to_eg";
+                if (isset($exchangeRates[$targetToEgKey])) {
+                    // Inverse: EGP -> target = 1 / (target -> EGP)
+                    $egToTarget = 1 / (float) $exchangeRates[$targetToEgKey];
+                }
+            }
+            
+            if ($sourceToEg !== null && $egToTarget !== null) {
+                return $sourceToEg * $egToTarget;
+            }
+        } elseif ($sourceCountry === 'eg') {
+            // Converting from EGP to another currency
+            $egToTargetKey = "eg_to_{$targetCountry}";
+            if (isset($exchangeRates[$egToTargetKey])) {
+                return (float) $exchangeRates[$egToTargetKey];
+            }
+            
+            // Try reverse
+            $targetToEgKey = "{$targetCountry}_to_eg";
+            if (isset($exchangeRates[$targetToEgKey])) {
+                return 1 / (float) $exchangeRates[$targetToEgKey];
+            }
+        } elseif ($targetCountry === 'eg') {
+            // Converting to EGP from another currency
             $sourceToEgKey = "{$sourceCountry}_to_eg";
-            if (isset($exchangeRates[$sourceToEgKey]) && isset($exchangeRates[$egToTargetKey])) {
-                return (float) $exchangeRates[$sourceToEgKey] * (float) $exchangeRates[$egToTargetKey];
+            if (isset($exchangeRates[$sourceToEgKey])) {
+                return (float) $exchangeRates[$sourceToEgKey];
+            }
+            
+            // Try reverse
+            $egToSourceKey = "eg_to_{$sourceCountry}";
+            if (isset($exchangeRates[$egToSourceKey])) {
+                return 1 / (float) $exchangeRates[$egToSourceKey];
             }
         }
 
