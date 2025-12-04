@@ -55,3 +55,7 @@ storage/framework/laravel-excel/
 .phpactor.json
 
 storage/framework/maintenance.php
+
+# Documentation files
+*.md
+!/md/**

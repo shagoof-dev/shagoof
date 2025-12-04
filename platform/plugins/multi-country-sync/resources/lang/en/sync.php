@@ -1,0 +1,37 @@
+<?php
+
+return [
+    'name' => 'Multi Country Sync',
+    'settings' => [
+        'title' => 'Multi Country Sync Settings',
+        'description' => 'Configure synchronization settings for multi-country product sync',
+        'enabled' => 'Enable Multi Country Sync',
+        'enabled_helper' => 'When enabled, products will be automatically synchronized to other country instances',
+        'current_country' => 'Current Country',
+        'current_country_helper' => 'Select the current country instance (EG, UAE, or SA)',
+        'api_url' => 'API URL',
+        'api_key' => 'API Key',
+        'api_key_placeholder' => 'Enter API key for this instance',
+        'instance_enabled' => 'Enable Sync for this Instance',
+        'advanced' => 'Advanced Settings',
+        'sync_on_create' => 'Sync on Product Create',
+        'sync_on_update' => 'Sync on Product Update',
+        'use_queue' => 'Use Queue for Sync',
+        'use_queue_helper' => 'When enabled, sync operations will be processed in background using queue',
+        'max_retries' => 'Max Retries',
+        'retry_delay' => 'Retry Delay (seconds)',
+        'retry_delay_helper' => 'Time to wait before retrying failed sync operations',
+        'test_connection' => 'Test Connection',
+        'generate_api_key' => 'Generate API Key',
+        'generate_api_key_confirm' => 'This will generate a new API key. The old key will be replaced. Continue?',
+        'api_key_generated' => 'API Key Generated',
+        'api_key_saved' => 'The key has been saved automatically.',
+        'api_key_copy_warning' => 'Please copy this key now. It will be hidden in 10 seconds!',
+        'api_key_helper' => 'Click the key icon to generate a new API key, or paste an existing key manually',
+        'show_hide_key' => 'Show/Hide Key',
+        'currency_conversion' => 'Currency Conversion',
+        'enable_currency_conversion' => 'Enable Currency Conversion',
+        'enable_currency_conversion_helper' => 'When enabled, product prices will be automatically converted to the target country\'s currency using the configured exchange rates',
+    ],
+];
+

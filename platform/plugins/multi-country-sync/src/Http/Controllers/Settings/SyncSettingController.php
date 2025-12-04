@@ -1,0 +1,172 @@
+<?php
+
+namespace Botble\MultiCountrySync\Http\Controllers\Settings;
+
+use Botble\Base\Http\Controllers\BaseController;
+use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\MultiCountrySync\Forms\Settings\SyncSettingForm;
+use Botble\MultiCountrySync\Http\Requests\Settings\SyncSettingRequest;
+use Botble\Setting\Facades\Setting;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
+
+class SyncSettingController extends BaseController
+{
+    public function edit()
+    {
+        $this->pageTitle(trans('plugins/multi-country-sync::sync.settings.title'));
+        
+        // Force reload settings from database to ensure fresh values
+        Setting::load();
+
+        return SyncSettingForm::create()->renderForm();
+    }
+
+    public function update(SyncSettingRequest $request, BaseHttpResponse $response)
+    {
+        $data = $request->validated();
+
+        // Map form field names to setting keys
+        $settings = [];
+        
+        // Main settings
+        if (isset($data['multi_country_sync_enabled'])) {
+            $settings['multi_country_sync_enabled'] = $data['multi_country_sync_enabled'] ? '1' : '0';
+        }
+        
+        // Current country - it's required in validation, so it should always be present
+        // Check validated data first, then raw input as fallback
+        $currentCountry = $data['current_country'] ?? $request->input('current_country');
+        
+        // Always save current_country (it's required, so should always have a value)
+        if ($currentCountry && in_array($currentCountry, ['eg', 'uae', 'sa'])) {
+            $settings['multi_country_sync_current_country'] = (string) $currentCountry;
+        } else {
+            // Fallback: keep existing value or default to 'eg'
+            $existing = setting('multi_country_sync_current_country', 'eg');
+            $settings['multi_country_sync_current_country'] = (string) $existing;
+        }
+        
+        // UAE settings
+        if (isset($data['uae_api_url'])) {
+            $settings['multi_country_sync_uae_api_url'] = $data['uae_api_url'];
+        }
+        if (isset($data['uae_api_key'])) {
+            $settings['multi_country_sync_uae_api_key'] = $data['uae_api_key'];
+        }
+        if (isset($data['uae_sync_enabled'])) {
+            $settings['multi_country_sync_uae_enabled'] = $data['uae_sync_enabled'] ? '1' : '0';
+        }
+        
+        // SA settings
+        if (isset($data['sa_api_url'])) {
+            $settings['multi_country_sync_sa_api_url'] = $data['sa_api_url'];
+        }
+        if (isset($data['sa_api_key'])) {
+            $settings['multi_country_sync_sa_api_key'] = $data['sa_api_key'];
+        }
+        if (isset($data['sa_sync_enabled'])) {
+            $settings['multi_country_sync_sa_enabled'] = $data['sa_sync_enabled'] ? '1' : '0';
+        }
+        
+        // EG settings
+        if (isset($data['eg_api_url'])) {
+            $settings['multi_country_sync_eg_api_url'] = $data['eg_api_url'];
+        }
+        if (isset($data['eg_api_key'])) {
+            $settings['multi_country_sync_eg_api_key'] = $data['eg_api_key'];
+        }
+        if (isset($data['eg_sync_enabled'])) {
+            $settings['multi_country_sync_eg_enabled'] = $data['eg_sync_enabled'] ? '1' : '0';
+        }
+        
+        // Sync options
+        if (isset($data['sync_on_create'])) {
+            $settings['multi_country_sync_on_create'] = $data['sync_on_create'] ? '1' : '0';
+        }
+        if (isset($data['sync_on_update'])) {
+            $settings['multi_country_sync_on_update'] = $data['sync_on_update'] ? '1' : '0';
+        }
+        if (isset($data['use_queue'])) {
+            $settings['multi_country_sync_use_queue'] = $data['use_queue'] ? '1' : '0';
+        }
+        if (isset($data['max_retries'])) {
+            $settings['multi_country_sync_max_retries'] = (string) $data['max_retries'];
+        }
+        if (isset($data['retry_delay'])) {
+            $settings['multi_country_sync_retry_delay'] = (string) $data['retry_delay'];
+        }
+        
+        // Currency conversion settings
+        if (isset($data['convert_currency'])) {
+            $settings['multi_country_sync_convert_currency'] = $data['convert_currency'] ? '1' : '0';
+        }
+        if (isset($data['eg_currency'])) {
+            $settings['multi_country_sync_eg_currency'] = strtoupper($data['eg_currency']);
+        }
+        if (isset($data['uae_currency'])) {
+            $settings['multi_country_sync_uae_currency'] = strtoupper($data['uae_currency']);
+        }
+        if (isset($data['sa_currency'])) {
+            $settings['multi_country_sync_sa_currency'] = strtoupper($data['sa_currency']);
+        }
+        
+        // Exchange rates
+        if (isset($data['eg_to_sa_rate'])) {
+            $settings['multi_country_sync_eg_to_sa_rate'] = (string) $data['eg_to_sa_rate'];
+        }
+        if (isset($data['eg_to_uae_rate'])) {
+            $settings['multi_country_sync_eg_to_uae_rate'] = (string) $data['eg_to_uae_rate'];
+        }
+        if (isset($data['sa_to_eg_rate'])) {
+            $settings['multi_country_sync_sa_to_eg_rate'] = (string) $data['sa_to_eg_rate'];
+        }
+        if (isset($data['uae_to_eg_rate'])) {
+            $settings['multi_country_sync_uae_to_eg_rate'] = (string) $data['uae_to_eg_rate'];
+        }
+        if (isset($data['sa_to_uae_rate'])) {
+            $settings['multi_country_sync_sa_to_uae_rate'] = (string) $data['sa_to_uae_rate'];
+        }
+        if (isset($data['uae_to_sa_rate'])) {
+            $settings['multi_country_sync_uae_to_sa_rate'] = (string) $data['uae_to_sa_rate'];
+        }
+
+        // Save all settings
+        Setting::set($settings)->save();
+        
+        // Clear config cache to ensure new values are loaded
+        Artisan::call('config:clear');
+
+        return $response
+            ->setPreviousUrl(route('multi-country-sync.settings'))
+            ->setMessage(trans('core/base::notices.update_success_message'));
+    }
+
+    public function generateApiKey(Request $request, BaseHttpResponse $response)
+    {
+        $instance = $request->input('instance'); // uae, sa, or eg
+        
+        if (! in_array($instance, ['uae', 'sa', 'eg'])) {
+            return $response
+                ->setError()
+                ->setMessage('Invalid instance')
+                ->setStatusCode(400);
+        }
+
+        // Generate a secure API key (64 characters)
+        $apiKey = Str::random(64);
+        
+        // Save the API key to settings
+        $settingKey = "multi_country_sync_{$instance}_api_key";
+        Setting::set($settingKey, $apiKey)->save();
+
+        return $response
+            ->setData([
+                'api_key' => $apiKey,
+                'instance' => strtoupper($instance),
+            ])
+            ->setMessage(trans('plugins/multi-country-sync::sync.settings.api_key_generated'));
+    }
+}
+
