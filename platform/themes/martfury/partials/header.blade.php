@@ -3,13 +3,17 @@
         $host = request()->getHost();
         $scheme = request()->getScheme();
         $currentCountry = 'UAE';
+        $currentCountryFlag = 'ae';
         if (strpos($host, 'eg.') === 0) {
             $currentCountry = 'Egypt';
+            $currentCountryFlag = 'eg';
         } elseif (strpos($host, 'sa.') === 0) {
             $currentCountry = 'KSA';
+            $currentCountryFlag = 'sa';
         }
         
         $currentPath = request()->getRequestUri();
+        $flagBasePath = '/vendor/core/core/base/img/flags/';
     @endphp
 
     <body {!! Theme::bodyAttributes() !!} @if (Theme::get('pageId')) id="{{ Theme::get('pageId') }}" @endif>
@@ -139,16 +143,28 @@
 
                                 <li class="country-switcher">
                                     <div class="ps-dropdown">
-                                        <a href="#"><span>{{ $currentCountry }}</span></a>
+                                        <a href="#">
+                                            <img src="{{ asset($flagBasePath . $currentCountryFlag . '.svg') }}" alt="{{ $currentCountry }}" style="height: 16px; width: auto; margin-right: 5px; vertical-align: middle;">
+                                            <span>{{ $currentCountry }}</span>
+                                        </a>
                                         <ul class="ps-dropdown-menu">
                                             <li>
-                                                <a href="{{ $scheme }}://eg.shagoof.com{{ $currentPath }}">Egypt</a>
+                                                <a href="{{ $scheme }}://eg.shagoof.com{{ $currentPath }}">
+                                                    <img src="{{ asset($flagBasePath . 'eg.svg') }}" alt="Egypt" style="height: 16px; width: auto; margin-right: 5px; vertical-align: middle;">
+                                                    Egypt
+                                                </a>
                                             </li>
                                             <li>
-                                                <a href="{{ $scheme }}://sa.shagoof.com{{ $currentPath }}">KSA</a>
+                                                <a href="{{ $scheme }}://sa.shagoof.com{{ $currentPath }}">
+                                                    <img src="{{ asset($flagBasePath . 'sa.svg') }}" alt="KSA" style="height: 16px; width: auto; margin-right: 5px; vertical-align: middle;">
+                                                    KSA
+                                                </a>
                                             </li>
                                             <li>
-                                                <a href="{{ $scheme }}://uae.shagoof.com{{ $currentPath }}">UAE</a>
+                                                <a href="{{ $scheme }}://uae.shagoof.com{{ $currentPath }}">
+                                                    <img src="{{ asset($flagBasePath . 'ae.svg') }}" alt="UAE" style="height: 16px; width: auto; margin-right: 5px; vertical-align: middle;">
+                                                    UAE
+                                                </a>
                                             </li>
                                         </ul>
                                     </div>
