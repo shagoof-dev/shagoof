@@ -94,7 +94,7 @@ class CategoryController extends BaseApiController
     {
         $slug = SlugHelper::getSlug($slug, SlugHelper::getPrefix(Category::class));
 
-        if (! $slug) {
+        if (!$slug) {
             return $this
                 ->httpResponse()
                 ->setError()
@@ -110,7 +110,7 @@ class CategoryController extends BaseApiController
             ])
             ->first();
 
-        if (! $category) {
+        if (!$category) {
             return $this
                 ->httpResponse()
                 ->setError()
