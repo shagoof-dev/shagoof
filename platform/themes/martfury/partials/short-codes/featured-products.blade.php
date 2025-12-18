@@ -1,9 +1,12 @@
-<div class="ps-product-list mt-40 mb-40">
+<!--==== Featured Products Section - New Arrivals =========-->
+<div class="ps-product-list featured-products mt-40 mb-40">
     <div class="ps-container">
         <div class="ps-section__header">
             <h3>{!! BaseHelper::clean($title) !!}</h3>
             <ul class="ps-section__links">
-                <li><a href="{{ route('public.products') }}" title="{{ __('View all products') }}">{{ __('View All') }}</a></li>
+                <li>
+                    <a href="{{ route('public.products') }}" title="{{ __('View all products') }}">{{ __('View All') }}</a>
+                </li>
             </ul>
         </div>
         <div class="ps-section__content">

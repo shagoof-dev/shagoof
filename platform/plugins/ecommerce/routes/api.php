@@ -15,6 +15,7 @@ use Botble\Ecommerce\Http\Controllers\API\OrderController;
 use Botble\Ecommerce\Http\Controllers\API\OrderReturnController;
 use Botble\Ecommerce\Http\Controllers\API\OrderTrackingController;
 use Botble\Ecommerce\Http\Controllers\API\ProductCategoryController;
+use Botble\Ecommerce\Http\Controllers\API\AuthController;
 use Botble\Ecommerce\Http\Controllers\API\ProductController;
 use Botble\Ecommerce\Http\Controllers\API\ReviewController;
 use Botble\Ecommerce\Http\Controllers\API\TaxController;
@@ -27,6 +28,11 @@ Route::group([
     'prefix' => 'api/v1/ecommerce/',
     'namespace' => 'Botble\Ecommerce\Http\Controllers\API',
 ], function (): void {
+    /*========= AUTH API ===========*/
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('register', [AuthController::class, 'register']);
+
+
     // Public routes that use token-based security
     Route::get('download/{token}/{order_id}', [DownloadController::class, 'downloadFile'])->name('api.ecommerce.download.download-file');
     Route::get('orders/download-proof/{token}/{order_id}', [OrderController::class, 'downloadProofFile'])->name('api.ecommerce.orders.download-proof-file');
@@ -83,7 +89,7 @@ Route::group([
     });
 
     Route::get('coupons', [CouponController::class, 'index']);
-    
+
     Route::group(['middleware' => ['api.optional.auth']], function (): void {
         Route::post('coupon/apply', [CouponController::class, 'apply']);
         Route::post('coupon/remove', [CouponController::class, 'remove']);
