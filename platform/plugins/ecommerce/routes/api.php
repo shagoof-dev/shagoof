@@ -31,31 +31,37 @@ Route::group([
     /*========= AUTH API ===========*/
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
-
-
+    Route::get('logged-user-details', [AuthController::class, 'currentUserDetails']);
+    /*Route::middleware('auth:sanctum')->get(
+        'logged-user-details',
+        [AuthController::class, 'currentUserDetails']
+    );*/
     // Public routes that use token-based security
     Route::get('download/{token}/{order_id}', [DownloadController::class, 'downloadFile'])->name('api.ecommerce.download.download-file');
     Route::get('orders/download-proof/{token}/{order_id}', [OrderController::class, 'downloadProofFile'])->name('api.ecommerce.orders.download-proof-file');
+
+    /*========= Products API ===========*/
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{slug}', [ProductController::class, 'show']);
     Route::get('products/{slug}/related', [ProductController::class, 'relatedProducts']);
     Route::get('products/{slug}/cross-sale', [ProductController::class, 'getCrossSaleProducts']);
     Route::get('products/{slug}/reviews', [ProductController::class, 'reviews']);
     Route::get('product-variation/{id}', [ProductController::class, 'getProductVariation'])->wherePrimaryKey();
-
     Route::get('product-categories', [ProductCategoryController::class, 'index']);
     Route::get('product-categories/{slug}', [ProductCategoryController::class, 'show']);
     Route::get('product-categories/{id}/products', [ProductCategoryController::class, 'products'])->wherePrimaryKey();
 
+    /*========= Brands API ===========*/
     Route::get('brands', [BrandController::class, 'index']);
     Route::get('brands/{slug}', [BrandController::class, 'show']);
     Route::get('brands/{id}/products', [BrandController::class, 'products'])->wherePrimaryKey();
 
     Route::get('filters', [FilterController::class, 'getFilters']);
-
     Route::get('flash-sales', [FlashSaleController::class, 'index']);
 
     Route::group(['middleware' => ['auth:sanctum']], function (): void {
+        Route::get('logged-user-details', [AuthController::class, 'currentUserDetails']);
+
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/{id}', [OrderController::class, 'show'])->wherePrimaryKey();
         Route::post('orders/{id}/cancel', [OrderController::class, 'cancel'])->wherePrimaryKey();

@@ -61,9 +61,6 @@ class AuthController extends BaseApiController
         ]);
     }
 
-    /**
-     * Register new customer
-     */
     public function register(Request $request): JsonResponse
     {
         // 1. Validate request
@@ -99,4 +96,30 @@ class AuthController extends BaseApiController
             ],
         ], 201);
     }
+
+    public function currentUserDetails(Request $request): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'welcome',
+        ]);
+        $customer = auth()->user();
+
+        if (!$customer) {
+            return response()->json([
+                'error' => true,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        return response()->json([
+            'error' => false,
+            'data' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'email' => $customer->email,
+            ],
+        ]);
+    }
+
 }
