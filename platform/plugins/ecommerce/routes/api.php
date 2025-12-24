@@ -31,11 +31,8 @@ Route::group([
     /*========= AUTH API ===========*/
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
-    Route::get('logged-user-details', [AuthController::class, 'currentUserDetails']);
-    /*Route::middleware('auth:sanctum')->get(
-        'logged-user-details',
-        [AuthController::class, 'currentUserDetails']
-    );*/
+    Route::get('customer-details', [AuthController::class, 'getCustomerDetailsByID']);
+
     // Public routes that use token-based security
     Route::get('download/{token}/{order_id}', [DownloadController::class, 'downloadFile'])->name('api.ecommerce.download.download-file');
     Route::get('orders/download-proof/{token}/{order_id}', [OrderController::class, 'downloadProofFile'])->name('api.ecommerce.orders.download-proof-file');
@@ -61,6 +58,8 @@ Route::group([
 
     Route::group(['middleware' => ['auth:sanctum']], function (): void {
         Route::get('logged-user-details', [AuthController::class, 'currentUserDetails']);
+        Route::post('customer/delete-account', [AuthController::class, 'deleteCustomerAccount']);
+        Route::patch('customer/update-details', [AuthController::class, 'updateCustomerDetails']);
 
         Route::get('orders', [OrderController::class, 'index']);
         Route::get('orders/{id}', [OrderController::class, 'show'])->wherePrimaryKey();

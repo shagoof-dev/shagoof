@@ -20,6 +20,7 @@ class AuthController extends BaseApiController
             'password' => ['required', 'string'],
         ]);
 
+
         // 2. Authenticate using customer guard
         if (!Auth::guard('customer')->attempt($credentials)) {
             return response()->json([
@@ -30,6 +31,7 @@ class AuthController extends BaseApiController
 
         // 3. Get authenticated customer
         $customer = Auth::guard('customer')->user();
+        Auth::setUser($customer);
 
         // 4. Block inactive customers
         if (!$customer->status) {
@@ -54,13 +56,17 @@ class AuthController extends BaseApiController
                 'customer' => [
                     'id' => $customer->id,
                     'name' => $customer->name,
+                    'phone' => $customer->phone,
                     'email' => $customer->email,
+                    'status' => $customer->status,
+                    'is_vendor' => $customer->is_vendor,
                     'avatar' => RvMedia::getImageUrl($customer->avatar),
                 ],
             ],
         ]);
     }
 
+    # register customer #
     public function register(Request $request): JsonResponse
     {
         // 1. Validate request
@@ -78,15 +84,11 @@ class AuthController extends BaseApiController
             'status' => true,
         ]);
 
-        // 3. Create token
-        $token = $customer->createToken('customer-token')->plainTextToken;
-
         // 4. Response
         return response()->json([
             'success' => true,
             'message' => __('Registration successful'),
             'data' => [
-                'token' => $token,
                 'customer' => [
                     'id' => $customer->id,
                     'name' => $customer->name,
@@ -97,29 +99,151 @@ class AuthController extends BaseApiController
         ], 201);
     }
 
+    # current logged user details #
     public function currentUserDetails(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => false,
-            'message' => 'welcome',
-        ]);
         $customer = auth()->user();
-
         if (!$customer) {
             return response()->json([
-                'error' => true,
+                'success' => false,
                 'message' => 'Unauthenticated.',
             ], 401);
         }
 
         return response()->json([
-            'error' => false,
+            'success' => true,
             'data' => [
                 'id' => $customer->id,
                 'name' => $customer->name,
+                'phone' => $customer->phone,
                 'email' => $customer->email,
+                'status' => $customer->status,
+                'is_vendor' => $customer->is_vendor,
+                'avatar' => RvMedia::getImageUrl($customer->avatar),
             ],
         ]);
     }
+
+
+    # current logged user details #
+    public function getCustomerDetailsByID(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cid' => [
+                'required',
+                'integer',
+                'exists:ec_customers,id',
+            ],
+        ]);
+
+        $customerDetails = Customer::find($request->cid);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $customerDetails->id,
+                'name' => $customerDetails->name,
+                'phone' => $customerDetails->phone,
+                'email' => $customerDetails->email,
+                'status' => $customerDetails->status,
+                'is_vendor' => $customerDetails->is_vendor,
+                'avatar' => RvMedia::getImageUrl($customerDetails->avatar),
+            ],
+        ]);
+    }
+
+    /*
+     * Delete authenticated customer account
+     * @route POST /api/v1/ecommerce/customer/delete-account
+     */
+    public function deleteCustomerAccount(Request $request): JsonResponse
+    {
+        $customer = auth()->user();
+
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Unauthenticated.'),
+            ], 401);
+        }
+
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        // Verify password
+        if (!Hash::check($request->password, $customer->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Invalid password'),
+            ], 403);
+        }
+
+        $customer->tokens()->delete();
+        Auth::guard('customer')->logout();
+        $customer->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Your account has been deleted successfully'),
+        ]);
+    }
+
+    /*
+     * Partially update authenticated customer details (PATCH)
+     * @route POST /api/v1/ecommerce/customer/update-profile
+     */
+    public function updateCustomerDetails(Request $request): JsonResponse
+    {
+        // Get authenticated customer
+        $customer = auth()->user();
+
+        if (!$customer)
+            return response()->json([
+                'success' => false,
+                'message' => __('Unauthenticated.'),
+            ], 401);
+
+        // Validate only sent fields
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                'unique:ec_customers,email,' . $customer->id,
+            ],
+            'password' => ['sometimes', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        // Apply updates dynamically
+        foreach ($data as $key => $value) {
+            if ($key === 'password') {
+                $customer->password = Hash::make($value);
+            } else {
+                $customer->{$key} = $value;
+            }
+        }
+
+        $customer->save();
+
+        // Response
+        return response()->json([
+            'success' => true,
+            'message' => __('Profile updated successfully'),
+            'data' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'phone' => $customer->phone,
+                'email' => $customer->email,
+                'status' => $customer->status,
+                'is_vendor' => $customer->is_vendor,
+                'avatar' => RvMedia::getImageUrl($customer->avatar),
+            ],
+        ]);
+    }
+
+
+
 
 }
