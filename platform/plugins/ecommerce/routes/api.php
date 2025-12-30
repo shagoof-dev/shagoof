@@ -31,11 +31,9 @@ Route::group([
     /*========= AUTH API ===========*/
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
-    Route::get('customer-details', [AuthController::class, 'getCustomerDetailsByID']);
 
-    // Public routes that use token-based security
-    Route::get('download/{token}/{order_id}', [DownloadController::class, 'downloadFile'])->name('api.ecommerce.download.download-file');
-    Route::get('orders/download-proof/{token}/{order_id}', [OrderController::class, 'downloadProofFile'])->name('api.ecommerce.orders.download-proof-file');
+    /* getCustomerDetailsByID */
+    Route::get('customer-details', [AuthController::class, 'getCustomerDetailsByID']);
 
     /*========= Products API ===========*/
     Route::get('products', [ProductController::class, 'index']);
@@ -47,6 +45,10 @@ Route::group([
     Route::get('product-categories', [ProductCategoryController::class, 'index']);
     Route::get('product-categories/{slug}', [ProductCategoryController::class, 'show']);
     Route::get('product-categories/{id}/products', [ProductCategoryController::class, 'products'])->wherePrimaryKey();
+
+    // Public routes that use token-based security
+    Route::get('download/{token}/{order_id}', [DownloadController::class, 'downloadFile'])->name('api.ecommerce.download.download-file');
+    Route::get('orders/download-proof/{token}/{order_id}', [OrderController::class, 'downloadProofFile'])->name('api.ecommerce.orders.download-proof-file');
 
     /*========= Brands API ===========*/
     Route::get('brands', [BrandController::class, 'index']);

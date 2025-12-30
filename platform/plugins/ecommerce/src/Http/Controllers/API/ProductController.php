@@ -31,7 +31,8 @@ class ProductController extends BaseApiController
 {
     public function __construct(
         protected ProductCrossSalePriceService $productCrossSalePriceService
-    ) {
+    )
+    {
     }
 
     /**
@@ -59,7 +60,6 @@ class ProductController extends BaseApiController
     public function index(Request $request, GetProductService $productService)
     {
         $with = EcommerceHelper::withProductEagerLoadingRelations();
-
         $products = $productService->getProduct($request, null, null, $with);
 
         return $this
@@ -115,7 +115,7 @@ class ProductController extends BaseApiController
             $request->input()
         );
 
-        if (! $product->is_variation && $productVariation) {
+        if (!$product->is_variation && $productVariation) {
             $product = app(UpdateDefaultProductService::class)->updateColumns($product, $productVariation);
             $selectedProductVariation = $productVariation->defaultVariation;
             $selectedProductVariation->product_id = $productVariation->id;
@@ -138,7 +138,7 @@ class ProductController extends BaseApiController
                 ->reject(function (ProductVariationItem $productVariation) use ($productVariations) {
                     $variationItem = $productVariations->where('id', $productVariation->variation_id)->first();
 
-                    if (! $variationItem) {
+                    if (!$variationItem) {
                         return false;
                     }
 
@@ -416,11 +416,12 @@ class ProductController extends BaseApiController
      * @queryParam reference_product string Reference product slug. No-example
      */
     public function getProductVariation(
-        int|string $id,
-        Request $request,
-        ProductInterface $productRepository,
+        int|string                            $id,
+        Request                               $request,
+        ProductInterface                      $productRepository,
         GetProductWithCrossSalesBySlugService $getProductWithCrossSalesBySlugService,
-    ) {
+    )
+    {
         $request->validate([
             'reference_product' => ['sometimes', 'required', 'string'],
             'attributes' => ['sometimes', 'array'],
@@ -499,7 +500,7 @@ class ProductController extends BaseApiController
                 $product->warningMessage = __('Warning: This product is on backorder and may take longer to ship.');
             } elseif ($product->isOutOfStock()) {
                 $product->errorMessage = __('Out of stock');
-            } elseif (! $product->with_storehouse_management || $product->quantity < 1) {
+            } elseif (!$product->with_storehouse_management || $product->quantity < 1) {
                 $product->successMessage = __('In stock');
             } elseif ($product->quantity) {
                 if (EcommerceHelper::showNumberOfProductsInProductSingle()) {
@@ -551,7 +552,7 @@ class ProductController extends BaseApiController
             }
         }
 
-        if (! $originalProduct) {
+        if (!$originalProduct) {
             return $this
                 ->httpResponse()
                 ->setError()
@@ -573,7 +574,7 @@ class ProductController extends BaseApiController
                 ->reject(function (ProductVariationItem $productVariation) use ($productVariations) {
                     $variationItem = $productVariations->where('id', $productVariation->variation_id)->first();
 
-                    if (! $variationItem) {
+                    if (!$variationItem) {
                         return false;
                     }
 
@@ -604,11 +605,11 @@ class ProductController extends BaseApiController
             );
         }
 
-        if (! $product) {
+        if (!$product) {
             $product = $originalProduct;
         }
 
-        if (! $product->is_variation) {
+        if (!$product->is_variation) {
             $selectedAttributes = $product->defaultVariation->productAttributes->map(function ($item) {
                 $item->attribute_set_slug = $item->productAttributeSet->slug;
 
@@ -681,7 +682,7 @@ class ProductController extends BaseApiController
                 'unavailable_attribute_ids' => $unavailableAttributeIds,
                 'selected_attributes' => is_object($selectedAttributes) && method_exists($selectedAttributes, 'map')
                     ? $selectedAttributes->map(function ($attr) use ($productVariations) {
-                        if (! is_object($attr)) {
+                        if (!is_object($attr)) {
                             return null;
                         }
 

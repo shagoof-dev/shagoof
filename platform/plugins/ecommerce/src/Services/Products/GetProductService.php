@@ -24,11 +24,11 @@ class GetProductService
         array $conditions = []
     ): Collection|LengthAwarePaginator {
         $num = $request->integer('num') ?: $request->integer('per-page') ?: $request->input('per_page');
-        $shows = EcommerceHelper::getShowParams();
+        /*$shows = EcommerceHelper::getShowParams();*/
 
-        if (! array_key_exists($num, $shows)) {
+        /*if (! array_key_exists($num, $shows)) {
             $num = (int) theme_option('number_of_products_per_page', 12);
-        }
+        }*/
 
         $keyword = $request->input('q') ?: $request->input('keyword') ?: $request->input('search');
 
