@@ -70,13 +70,20 @@ Route::group([
         Route::post('orders/{id}/upload-proof', [OrderController::class, 'uploadProof'])->wherePrimaryKey();
         Route::get('orders/{id}/download-proof', [OrderController::class, 'downloadProof'])->wherePrimaryKey();
         Route::post('orders/{id}/confirm-delivery', [OrderController::class, 'confirmDelivery'])->wherePrimaryKey();
+
+        /*========= Addresses ===========*/
         Route::get('addresses', [AddressController::class, 'index']);
+        Route::get('addresses/{id}', [AddressController::class, 'show'])->wherePrimaryKey();
         Route::post('addresses', [AddressController::class, 'store']);
         Route::put('addresses/{id}', [AddressController::class, 'update'])->wherePrimaryKey();
         Route::delete('addresses/{id}', [AddressController::class, 'destroy'])->wherePrimaryKey();
+
+        /*========= Reviews ===========*/
         Route::get('reviews', [ReviewController::class, 'index']);
         Route::post('reviews', [ReviewController::class, 'store']);
         Route::delete('reviews/{id}', [ReviewController::class, 'destroy'])->wherePrimaryKey();
+
+        /*========= Order Returns ===========*/
         Route::get('order-returns', [OrderReturnController::class, 'index']);
         Route::get('order-returns/{id}', [OrderReturnController::class, 'show'])->wherePrimaryKey();
         Route::post('order-returns', [OrderReturnController::class, 'store']);
